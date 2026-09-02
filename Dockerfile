@@ -1,4 +1,4 @@
-FROM golang:1.26.1-trixie AS stage-build
+FROM golang:1.27.1-trixie AS stage-build
 
 ARG TARGETARCH
 ARG VERSION
@@ -25,7 +25,7 @@ RUN make build -s \
     && mv /opt/gitverse_notifier/build/gitverse_notifier /opt/gitverse_notifier/gitverse_notifier
 
 RUN mkdir /opt/gitverse_notifier/release \
-    && mv /opt/gitverse_notifier/config_example.yml /opt/gitverse_notifier/release \
+    && mv /opt/gitverse_notifier/config.yml.example /opt/gitverse_notifier/release \
     && mv /opt/gitverse_notifier/entrypoint.sh /opt/gitverse_notifier/release \
     && chmod 755 /opt/gitverse_notifier/release/entrypoint.sh 
 

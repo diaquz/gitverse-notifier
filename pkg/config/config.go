@@ -27,7 +27,7 @@ type Config struct {
 	JiraURL string `mapstructure:"JIRA_URL"`
 
 	JiraUsername string `mapstructure:"JIRA_USERNAME"`
-	JiraPassowrd string `mapstructure:"JIRA_PASSWORD"`
+	JiraPassword string `mapstructure:"JIRA_PASSWORD"`
 	JiraToken    string `mapstructure:"JIRA_TOKEN"`
 }
 

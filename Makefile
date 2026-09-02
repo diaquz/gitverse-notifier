@@ -1,7 +1,7 @@
 NAME=gitverse_notifier
 BUILDDIR=build
 
-VERSION ?= Unknown
+VERSION ?= latest
 BuildTime := $(shell date -u '+%Y-%m-%d %I:%M:%S%p')
 COMMIT := $(shell git rev-parse HEAD)
 GOVERSION := $(shell go version)
@@ -78,7 +78,7 @@ linux-riscv64:
 .PHONY: docker
 docker:
 	@echo "build docker images"
-	docker buildx build --build-arg VERSION=$(VERSION) -t jumpserver/vapp-connector:$(VERSION) . --load
+	docker buildx build --build-arg VERSION=$(VERSION) -t gitverse-notifier:$(VERSION) . --load
 
 .PHONY: clean
 clean:
