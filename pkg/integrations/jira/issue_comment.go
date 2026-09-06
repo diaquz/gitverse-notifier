@@ -6,23 +6,36 @@ import (
 )
 
 type IssueComment struct {
-	Repository string
-	Title      string
-	URL        string
-	Author     string
+	Repository  string
+	Title       string
+	URL         string
+	Author      string
 	AuthorLogin string
-	Branch     string
-	BranchURL string
-	Action     string
+	Branch      string
+	BranchURL   string
+	Action      string
 }
 
 func (pr *IssueComment) Format() string {
-	text := fmt.Sprintf(
-		"*%s*[%s] %s mentioned this issue in *pull request*[%s] on branch *%s*[%s]",
-		pr.Author, pr.AuthorLogin, pr.URL, pr.Branch, pr.BranchURL,
-	)
+	author := escapeWiki(pr.Author)
+	if author == "" {
+		author = escapeWiki(pr.AuthorLogin)
+	}
+	title := escapeWiki(pr.Title)
+	repo := escapeWiki(pr.Repository)
 
-	return text
+	var b strings.Builder
+	fmt.Fprintf(&b, "*%s* mentioned this issue in pull request *%s*", author, title)
+	if repo != "" {
+		fmt.Fprintf(&b, " (%s)", repo)
+	}
+	if pr.URL != "" {
+		fmt.Fprintf(&b, "\n%s", pr.URL)
+	}
+	if pr.Branch != "" {
+		fmt.Fprintf(&b, "\nBranch: *%s*", escapeWiki(pr.Branch))
+	}
+	return b.String()
 }
 
 func escapeWiki(s string) string {

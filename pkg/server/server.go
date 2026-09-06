@@ -1,26 +1,29 @@
 package server
 
 import (
-	"bytes"
+	"context"
 	"io"
 	"net"
 	"net/http"
 
 	"gitverse-notifier/pkg/config"
+	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )
 
 type HttpServer struct {
-	addr string
+	addr       string
+	dispatcher *events.Dispatcher
 }
 
-func NewHttpServer() *HttpServer {
+func NewHttpServer(dispatcher *events.Dispatcher) *HttpServer {
 	addr := net.JoinHostPort(config.GlobalConfig.BindHost, config.GlobalConfig.HTTPPort)
 
 	return &HttpServer{
-		addr: addr,
+		addr:       addr,
+		dispatcher: dispatcher,
 	}
 }
 
@@ -60,26 +63,22 @@ func (s *HttpServer) health(ctx *gin.Context) {
 func (s *HttpServer) handleEvent(ctx *gin.Context) {
 	body, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
-		logger.Errorf("failed to read /gitverse/event body: %v", err)
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "failed to read body"})
+		logger.Errorf("failed to read request body: %v", err)
+		ctx.Status(http.StatusBadRequest)
 		return
 	}
-	ctx.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 
-	logger.Infof("POST /gitverse/event headers=%v body=%s", ctx.Request.Header, string(body))
+	event := ctx.Request.Header.Get("X-Gitverse-Event")
+	eventType := ctx.Request.Header.Get("X-Gitverse-Event-Type")
+	ev, err := events.ParseEvent(event, eventType, body)
+	if err != nil {
+		logger.Errorf("failed to parse gitverse event: %v", err)
+		logger.Errorf("headers=%v body=%s", ctx.Request.Header, string(body))
+	}
 
-	// parse payload to gitverse event
-	// call manager
-	//   -> look up rules for event
-	//   -> if jira enabled
-	//   		parse task code, resolve task url
-	//   		add comment to jira task
-	//   		if needed make requesat to gitverse, to update title
-	//   -> if telegram enabled
-	//   		format massage (set link to task, if jira enabled and we now task number)
-	//   		make request to bot
-	// it all (after parsing) may be done in gorutin
-	// -> 200
 	ctx.Status(http.StatusOK)
-}
 
+	go func(event events.Event) {
+		s.dispatcher.Dispatch(context.Background(), event)
+	}(ev)
+}

@@ -1,24 +1,16 @@
 package events
 
-type ActionType int8
+import "context"
 
-const (
-	JiraCommentIssue ActionType = iota
-	TelegramNotify
-	GitverseUpdateTitle
-)
-
-type Action struct {
-	Event EventType
-	Action ActionType
-	// Template string
+type ActionRule struct {
+	On        EventType
+	Action    string
+	Branches  []string
+	Template  string
+	SkipEmpty bool
 }
 
-type ActionSettings struct {
-	Repository string
-	Actions []Action
-}
-
-func (s *ActionSettings) ActionsByEvent(event EventType) []Action {
-	return make([]Action, 0)
+type ActionHandler interface {
+	Name() string
+	Run(ctx context.Context, ev Event, rule ActionRule) error
 }

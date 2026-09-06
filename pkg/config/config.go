@@ -11,10 +11,9 @@ import (
 var GlobalConfig *Config
 
 type Config struct {
-	Root              string
-	LogDirPath        string
-	AccessKeyFilePath string
-	CertsFolderPath   string
+	Root          string
+	LogDirPath    string
+	ActionDirPath string
 
 	BindHost    string `mapstructure:"BIND_HOST"`
 	HTTPPort    string `mapstructure:"HTTPD_PORT"`
@@ -42,13 +41,11 @@ func Setup(configPath string) {
 
 func getDefaultConfig() Config {
 	rootPath := getPwdDirPath()
+	actionsPath := filepath.Join(rootPath, "actions")
 	dataFolderPath := filepath.Join(rootPath, "data")
 	LogDirPath := filepath.Join(dataFolderPath, "logs")
-	keyFolderPath := filepath.Join(dataFolderPath, "keys")
-	CertsFolderPath := filepath.Join(dataFolderPath, "certs")
 
-	folders := []string{dataFolderPath,
-		keyFolderPath, LogDirPath, CertsFolderPath}
+	folders := []string{dataFolderPath, LogDirPath, actionsPath}
 	for i := range folders {
 		if err := EnsureDirExist(folders[i]); err != nil {
 			log.Fatalf("Create folder failed: %s", err.Error())
@@ -56,14 +53,13 @@ func getDefaultConfig() Config {
 	}
 
 	return Config{
-		Root:            rootPath,
-		LogDirPath:      LogDirPath,
-		CertsFolderPath: CertsFolderPath,
-		BindHost:        "0.0.0.0",
-		HTTPPort:        "9001",
-		LogLevel:        "INFO",
-		LogFileName:     "gitverse-notifier.log",
-		LanguageCode:    "ru",
+		Root:          rootPath,
+		ActionDirPath: actionsPath,
+		BindHost:      "0.0.0.0",
+		HTTPPort:      "9001",
+		LogLevel:      "INFO",
+		LogFileName:   "gitverse-notifier.log",
+		LanguageCode:  "ru",
 	}
 }
 
