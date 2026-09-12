@@ -1,0 +1,5 @@
+{{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} Запрошена проверка PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}
+от {{.Sender.Name}}
+{{- if .PullRequest.URL}}
+{{.PullRequest.URL}}
+{{- end}}

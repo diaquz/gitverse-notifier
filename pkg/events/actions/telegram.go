@@ -33,6 +33,6 @@ func (a *TelegramNotify) Run(_ context.Context, ev events.Event, rule events.Act
 	if err != nil {
 		return err
 	}
-	logger.Debugf("[Action=%s] rendered telegram message body: %s", a.Name(), body)
+	logger.Debugf("[Action=%s] rendered telegram message body:\n%s", a.Name(), body)
 	return nil
 }

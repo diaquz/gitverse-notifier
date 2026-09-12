@@ -1,2 +1,1 @@
-[{{.Repository}}] Новый комментарий в запросе на слияние #{{.PullRequest.Number}}: {{.PullRequest.Title}}
-{{.Comment.Author.Name}}: {{.Comment.Body}}
+{{jiraLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} {{.PullRequest.Title}}

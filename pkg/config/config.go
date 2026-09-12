@@ -32,6 +32,8 @@ type Config struct {
 	JiraUsername string `mapstructure:"JIRA_USERNAME"`
 	JiraPassword string `mapstructure:"JIRA_PASSWORD"`
 	JiraToken    string `mapstructure:"JIRA_TOKEN"`
+
+	GitverseBaseURL string `mapstructure:"GITVERSE_BASE_URL"`
 }
 
 func Setup(configPath string) {

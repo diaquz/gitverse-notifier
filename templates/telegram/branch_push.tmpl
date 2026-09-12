@@ -1,0 +1,5 @@
+{{tgLink .Repository .RepositoryURL}} Push в {{tgLink .Branch .BranchURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}}
+{{.Sender.Name}} · commits: {{.Push.TotalCommits}}
+{{- if .BranchURL}}
+{{.BranchURL}}
+{{- end}}

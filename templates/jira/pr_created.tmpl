@@ -1,5 +1,4 @@
-{{/* Available: .Sender .PullRequest .Repository .Branch .Action .Type .Comment .Push .Status; funcs: jiraEscape, trim */}}
-*{{jiraEscape .Sender.Name}}* упомянул данную задачу в запросе на слияния *{{jiraEscape .PullRequest.Title}}*{{if .Repository}} ({{jiraEscape .Repository}}){{end}}
+*{{jiraEscape .Sender.Name}}* упомянул данную задачу в {{jiraLink (printf "запросе на слияние %s" .PullRequest.Title) .PullRequest.URL}} ({{jiraLink .Repository .RepositoryURL}})
 {{- if .Branch}}
-Ветка: *{{jiraEscape .Branch}}*
+Ветка: {{jiraLink .Branch .BranchURL}}
 {{- end}}

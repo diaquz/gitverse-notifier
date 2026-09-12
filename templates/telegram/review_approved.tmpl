@@ -1,0 +1,5 @@
+{{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}} одобрен: {{tgLink .PullRequest.Title .PullRequest.URL}}
+{{.Sender.Name}}
+{{- if .PullRequest.URL}}
+{{.PullRequest.URL}}
+{{- end}}

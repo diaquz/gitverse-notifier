@@ -36,7 +36,7 @@ func (a *JiraCommentIssue) Run(_ context.Context, ev events.Event, rule events.A
 	if err != nil {
 		return err
 	}
-	logger.Debugf("rendered issue comment body: %s", body)
+	logger.Debugf("rendered issue comment body:\n%s", body)
 	
 	if len(ev.IssueKeys) == 0 {
 		logger.Infof("[Action=%s] no issue keys (repository=%s title=%q branch=%q)", a.Name(),  ev.Repository, ev.PullRequest.Title, ev.Branch)

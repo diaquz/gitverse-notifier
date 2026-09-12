@@ -1,2 +1,2 @@
-[{{.Repository}}] Новый комментарий в запросе на слияние #{{.PullRequest.Number}}: {{.PullRequest.Title}}
+{{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} {{tgLink .PullRequest.Title .PullRequest.URL}}
 {{.Comment.Author.Name}}: {{.Comment.Body}}

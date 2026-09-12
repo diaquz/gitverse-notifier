@@ -39,6 +39,7 @@ type PullRequestInfo struct {
 	Body   string
 	State  string
 	Author Actor
+	URL    string
 }
 
 type CommentInfo struct {
@@ -60,17 +61,19 @@ type StatusInfo struct {
 }
 
 type Event struct {
-	Type        EventType
-	Action      string
-	Ref         string
-	Branch      string
-	Repository  string
-	Sender      Actor
-	PullRequest PullRequestInfo
-	Comment     CommentInfo
-	Push        PushInfo
-	Status      StatusInfo
-	IssueKeys   []string
+	Type          EventType
+	Action        string
+	Ref           string
+	Branch        string
+	BranchURL     string
+	Repository    string
+	RepositoryURL string
+	Sender        Actor
+	PullRequest   PullRequestInfo
+	Comment       CommentInfo
+	Push          PushInfo
+	Status        StatusInfo
+	IssueKeys     []string
 }
 
 func ResolveEventType(event, eventType, action string) (EventType, error) {

@@ -14,32 +14,36 @@ import (
 )
 
 type Data struct {
-	Type        string
-	Action      string
-	Repository  string
-	Ref         string
-	Branch      string
-	Sender      events.Actor
-	PullRequest events.PullRequestInfo
-	Comment     events.CommentInfo
-	Push        events.PushInfo
-	Status      events.StatusInfo
-	IssueKeys   []string
+	Type          string
+	Action        string
+	Repository    string
+	RepositoryURL string
+	Ref           string
+	Branch        string
+	BranchURL     string
+	Sender        events.Actor
+	PullRequest   events.PullRequestInfo
+	Comment       events.CommentInfo
+	Push          events.PushInfo
+	Status        events.StatusInfo
+	IssueKeys     []string
 }
 
 func DataFromEvent(ev events.Event) Data {
 	return Data{
-		Type:        string(ev.Type),
-		Action:      ev.Action,
-		Repository:  ev.Repository,
-		Ref:         ev.Ref,
-		Branch:      ev.Branch,
-		Sender:      ev.Sender,
-		PullRequest: ev.PullRequest,
-		Comment:     ev.Comment,
-		Push:        ev.Push,
-		Status:      ev.Status,
-		IssueKeys:   ev.IssueKeys,
+		Type:          string(ev.Type),
+		Action:        ev.Action,
+		Repository:    ev.Repository,
+		RepositoryURL: ev.RepositoryURL,
+		Ref:           ev.Ref,
+		Branch:        ev.Branch,
+		BranchURL:     ev.BranchURL,
+		Sender:        ev.Sender,
+		PullRequest:   ev.PullRequest,
+		Comment:       ev.Comment,
+		Push:          ev.Push,
+		Status:        ev.Status,
+		IssueKeys:     ev.IssueKeys,
 	}
 }
 
@@ -51,6 +55,9 @@ func funcMap() template.FuncMap {
 	return template.FuncMap{
 		"jiraEscape": JiraEscape,
 		"trim":       strings.TrimSpace,
+		"join":       strings.Join,
+		"jiraLink":   JiraLink,
+		"tgLink":     TelegramLink,
 	}
 }
 
@@ -63,6 +70,21 @@ func JiraEscape(s string) string {
 		"|", "\\|",
 	)
 	return replacer.Replace(s)
+}
+
+func JiraLink(text, link string) string {
+	text = JiraEscape(text)
+	if link == "" {
+		return text
+	}
+	return fmt.Sprintf("[%s|%s]", text, link)
+}
+
+func TelegramLink(text, link string) string {
+	if link == "" {
+		return text
+	}
+	return fmt.Sprintf("[%s](%s)", text, link)
 }
 
 func SetupTemplateEngine() (*Engine, error) {

@@ -37,7 +37,10 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	if err := parsers.SetupEventParser(enrichers.NewJiraIssueKeys()); err != nil {
+	if err := parsers.SetupEventParser(
+		enrichers.NewJiraIssueKeys(),
+		enrichers.NewGitverseLinks(),
+	); err != nil {
 		logger.Fatal(err)
 	}
 
