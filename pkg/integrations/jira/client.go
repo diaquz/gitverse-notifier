@@ -83,13 +83,6 @@ func (j *JiraClient) IssueURL(taskCode string) string {
 	return fmt.Sprintf("%s/browse/%s", j.baseURL, strings.TrimSpace(taskCode))
 }
 
-func (j *JiraClient) AddPRComment(taskCode string, pr IssueComment) (*gojira.Comment, error) {
-	if _, err := j.FindTask(taskCode); err != nil {
-		return nil, err
-	}
-	return j.AddComment(taskCode, pr.Format())
-}
-
 func (j *JiraClient) AddComment(taskCode, body string) (*gojira.Comment, error) {
 	comment, resp, err := j.client.Issue.AddComment(taskCode, &gojira.Comment{Body: body})
 	if err != nil {

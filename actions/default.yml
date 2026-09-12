@@ -3,7 +3,7 @@ repository: any
 actions:
   - on: pull_request.opened
     action: jira.comment_issue
-    template: jira/pr_created
+    template: jira/pr_opened
 
   - on: pull_request.opened
     action: telegram.notify

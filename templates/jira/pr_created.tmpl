@@ -1,4 +1,0 @@
-*{{jiraEscape .Sender.Name}}* упомянул данную задачу в {{jiraLink (printf "запросе на слияние %s" .PullRequest.Title) .PullRequest.URL}} ({{jiraLink .Repository .RepositoryURL}})
-{{- if .Branch}}
-Ветка: {{jiraLink .Branch .BranchURL}}
-{{- end}}
