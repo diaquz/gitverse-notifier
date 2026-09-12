@@ -1,5 +1,5 @@
 {{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} Открыт PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}
-{{.PullRequest.Author.Name}}
+{{tgLink .PullRequest.Author.Name .PullRequest.Author.URL}}
 {{- if .PullRequest.URL}}
 {{.PullRequest.URL}}
 {{- end}}

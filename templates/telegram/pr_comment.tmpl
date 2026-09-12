@@ -1,5 +1,5 @@
 {{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} Новый комментарий{{if .PullRequest.Number}} в PR #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}
-{{.Comment.Author.Name}}: {{.Comment.Body}}
+{{tgLink .Comment.Author.Name .Comment.Author.URL}}: {{.Comment.Body}}
 {{- if .PullRequest.URL}}
 {{.PullRequest.URL}}
 {{- end}}

@@ -18,6 +18,11 @@ NOTIFIERLDFLAGS+=-X 'main.Version=$(VERSION)'
 
 NOTIFIERBUILD=CGO_ENABLED=0 go build -trimpath -ldflags "$(NOTIFIERLDFLAGS) ${LDFLAGS}"
 
+init_configs:
+	for file in *.yml.example; do \
+		cp "$$file" "$$(basename "$$file" .example)"; \
+	done
+
 build:
 	echo "GOARCH=$(GOARCH) GOOS=$(GOOS) $(NOTIFIERBUILD) -o $(BUILDDIR)/$(NAME) ."
 	GOARCH=$(GOARCH) GOOS=$(GOOS) $(NOTIFIERBUILD) -o $(BUILDDIR)/$(NAME) .

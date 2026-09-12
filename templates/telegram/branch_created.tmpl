@@ -1,5 +1,5 @@
 {{tgLink .Repository .RepositoryURL}} Создана ветка {{tgLink .Branch .BranchURL}}
-{{.Sender.Name}}
+{{tgLink .Sender.Name .Sender.URL}}
 {{- if .BranchURL}}
 {{.BranchURL}}
 {{- end}}

@@ -14,7 +14,7 @@ type GitverseLinks struct {
 }
 
 func NewGitverseLinks() *GitverseLinks {
-	base := strings.TrimRight(config.GlobalConfig.GitverseBaseURL, "/")
+	base := strings.TrimRight(strings.TrimSpace(config.GlobalConfig.GitverseBaseURL), "/")
 	return &GitverseLinks{baseURL: base}
 }
 
@@ -23,7 +23,15 @@ func (e *GitverseLinks) Name() string {
 }
 
 func (e *GitverseLinks) Enrich(event *events.Event) error {
-	if event.Repository == "" || e.baseURL == "" {
+	if e.baseURL == "" {
+		return nil
+	}
+
+	event.Sender = e.withUserURL(event.Sender)
+	event.PullRequest.Author = e.withUserURL(event.PullRequest.Author)
+	event.Comment.Author = e.withUserURL(event.Comment.Author)
+
+	if event.Repository == "" {
 		return nil
 	}
 
@@ -39,4 +47,13 @@ func (e *GitverseLinks) Enrich(event *events.Event) error {
 	}
 
 	return nil
+}
+
+func (e *GitverseLinks) withUserURL(actor events.Actor) events.Actor {
+	name := strings.TrimSpace(actor.Name)
+	if name == "" {
+		return actor
+	}
+	actor.URL = fmt.Sprintf("%s/%s", e.baseURL, url.PathEscape(name))
+	return actor
 }

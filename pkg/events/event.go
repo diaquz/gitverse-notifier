@@ -31,6 +31,7 @@ type Actor struct {
 	ID    int64
 	Name  string
 	Email string
+	URL   string
 }
 
 type PullRequestInfo struct {

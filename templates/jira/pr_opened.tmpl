@@ -1,4 +1,4 @@
-*{{jiraEscape .Sender.Name}}* открыл запрос на слияние {{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{jiraLink .PullRequest.Title .PullRequest.URL}} ({{jiraLink .Repository .RepositoryURL}})
+{{jiraLink .Sender.Name .Sender.URL}} открыл запрос на слияние{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{jiraLink .PullRequest.Title .PullRequest.URL}} ({{jiraLink .Repository .RepositoryURL}})
 {{- if .Branch}}
 Ветка: {{jiraLink .Branch .BranchURL}}
 {{- end}}
