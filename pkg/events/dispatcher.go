@@ -41,6 +41,7 @@ func (d *Dispatcher) Dispatch(ctx context.Context, event Event) {
 			continue
 		}
 
+		logger.Debugf("[EventDispather] processing %s action for %s", handler.Name(), event.Type)
 		if err := handler.Run(ctx, event, rule); err != nil {
 			logger.Errorf("action %s failed for event=%s repository=%s: %v", rule.Action, event.Type, event.Repository, err)
 		}

@@ -9,7 +9,7 @@ import (
 	"gitverse-notifier/pkg/templates"
 )
 
-const defaultTelegramTemplate = "telegram/default.tmpl"
+const defaultTelegramTemplate = "telegram/default"
 
 type TelegramNotify struct {
 	Templates *templates.Engine

@@ -10,6 +10,7 @@ import (
 
 	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/events"
+	"gitverse-notifier/pkg/logger"
 )
 
 type Data struct {
@@ -66,7 +67,7 @@ func JiraEscape(s string) string {
 
 func SetupTemplateEngine() (*Engine, error) {
 	cfg := config.GlobalConfig
-	pattern := filepath.Join(cfg.TemplatesDirPath, cfg.TemplatesDirPath)
+	pattern := filepath.Join(cfg.TemplatesDirPath, cfg.TemplatesPattern)
 
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
@@ -88,10 +89,12 @@ func SetupTemplateEngine() (*Engine, error) {
 		// 	telegram/default.tmpl
 		// 	jira/default.tml
 		rel, err := filepath.Rel(cfg.TemplatesDirPath, path)
-		name := strings.TrimSuffix(filepath.Base(rel), filepath.Ext(rel))
+		name := strings.TrimSuffix(rel, filepath.Ext(rel))
 		if _, err := root.New(name).Parse(string(content)); err != nil {
 			return nil, fmt.Errorf("failed to parse template %s: %w", path, err)
 		}
+
+		logger.Debugf("[TemplatesEngine] add new template %s for %s", name, path)
 	}
 
 	return &Engine{engine: root}, nil

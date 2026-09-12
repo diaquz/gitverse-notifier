@@ -47,9 +47,9 @@ func getDefaultConfig() Config {
 	actionsPath := filepath.Join(rootPath, "actions")
 	templatesPath := filepath.Join(rootPath, "templates")
 	dataFolderPath := filepath.Join(rootPath, "data")
-	LogDirPath := filepath.Join(dataFolderPath, "logs")
+	logDirPath := filepath.Join(dataFolderPath, "logs")
 
-	folders := []string{dataFolderPath, LogDirPath, actionsPath, templatesPath}
+	folders := []string{dataFolderPath, logDirPath, actionsPath, templatesPath}
 	for i := range folders {
 		if err := EnsureDirExist(folders[i]); err != nil {
 			log.Fatalf("Create folder failed: %s", err.Error())
@@ -58,6 +58,7 @@ func getDefaultConfig() Config {
 
 	return Config{
 		Root:             rootPath,
+		LogDirPath:       logDirPath,
 		ActionsDirPath:   actionsPath,
 		TemplatesDirPath: templatesPath,
 		BindHost:         "0.0.0.0",
@@ -65,7 +66,7 @@ func getDefaultConfig() Config {
 		LogLevel:         "INFO",
 		LogFileName:      "gitverse-notifier.log",
 		LanguageCode:     "ru",
-		TemplatesPattern: "*.tmpl",
+		TemplatesPattern: "**/*.tmpl",
 	}
 }
 

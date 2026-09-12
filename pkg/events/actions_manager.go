@@ -25,20 +25,14 @@ type ActionSettings struct {
 func (s *ActionSettings) ActionsByEvent(event Event) []ActionRule {
 	actions := make([]ActionRule, 0)
 	for _, rule := range s.Actions {
-		matched := true
-
-		if rule.On == event.Type {
-			matched = matched && true
+		if rule.On != event.Type {
+			continue
 		}
-		if rule.Branch == "" || event.Branch == rule.Branch {
-			matched = matched && true
+		if rule.Branch != "" && event.Branch != rule.Branch {
+			continue
 		}
-
-		if matched {
-			actions = append(actions, rule)
-		}
+		actions = append(actions, rule)
 	}
-
 	return actions
 }
 
@@ -132,14 +126,12 @@ func loadActionSettings(path string) (*ActionSettings, error) {
 		return nil, fmt.Errorf("failed to parse actions settings %s: %w", path, err)
 	}
 
-	for _, action := range settings.Actions {
-		eventType, ok := ParseEventType(action.OnCode)
-
+	for i := range settings.Actions {
+		eventType, ok := ParseEventType(settings.Actions[i].OnCode)
 		if !ok {
-			return nil, fmt.Errorf("action for unknown event '%s' in %q", action.OnCode, path)
+			return nil, fmt.Errorf("action for unknown event '%s' in %q", settings.Actions[i].OnCode, path)
 		}
-
-		action.On = eventType
+		settings.Actions[i].On = eventType
 	}
 
 	return &settings, nil
