@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"gitverse-notifier/pkg/events"
+	"gitverse-notifier/pkg/logger"
+	"gitverse-notifier/pkg/repositories"
 )
 
 var (
@@ -12,10 +14,12 @@ var (
 	leadingIssueKeyRe = regexp.MustCompile(`^([A-Z][A-Z0-9]+-\d+)\b`)
 )
 
-type JiraIssueKeys struct{}
+type JiraIssueKeys struct {
+	manager *repositories.RepositoriesManager
+}
 
-func NewJiraIssueKeys() *JiraIssueKeys {
-	return &JiraIssueKeys{}
+func NewJiraIssueKeys(manager *repositories.RepositoriesManager) *JiraIssueKeys {
+	return &JiraIssueKeys{manager: manager}
 }
 
 func (e *JiraIssueKeys) Name() string {
@@ -38,6 +42,11 @@ func (e *JiraIssueKeys) Enrich(event *events.Event) error {
 		if _, ok := seen[key]; ok {
 			return
 		}
+
+		if !e.manager.IsJiraCodeAllowed(event.Repository, key) {
+			logger.Debugf("[JiraCodesEnricher] code %s is permited for repository %s", key, event.Repository)
+			return
+		}
 		seen[key] = struct{}{}
 		keys = append(keys, key)
 	}
@@ -55,8 +64,9 @@ func (e *JiraIssueKeys) Enrich(event *events.Event) error {
 }
 
 // leadingIssueKeys возвращает кода задач jira, содержащиеся в заголовке PR, например
-// 	JIRA-1 Заголовок
-// 	JIRA-2 JIRA-3 Заголовок
+//
+//	JIRA-1 Заголовок
+//	JIRA-2 JIRA-3 Заголовок
 func leadingIssueKeys(title string) []string {
 	rest := strings.TrimSpace(title)
 	var out []string
@@ -74,7 +84,8 @@ func leadingIssueKeys(title string) []string {
 }
 
 // issueKeysInRef возвращает номера задач jira, которые содержатся в имени ветки, например
-// 	JIRA-1
+//
+//	JIRA-1
 func issueKeysInRef(text string) []string {
 	matches := issueKeyRe.FindAllString(text, -1)
 	if len(matches) == 0 {

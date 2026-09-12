@@ -10,6 +10,7 @@ import (
 	"gitverse-notifier/pkg/events/parsers"
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/logger"
+	"gitverse-notifier/pkg/repositories"
 	"gitverse-notifier/pkg/server"
 	"gitverse-notifier/pkg/templates"
 )
@@ -32,14 +33,19 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	repositoriesManager, err := repositories.SetupRepositoriesManager()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
 	engine, err := templates.SetupTemplateEngine()
 	if err != nil {
 		logger.Fatal(err)
 	}
 
 	if err := parsers.SetupEventParser(
-		enrichers.NewJiraIssueKeys(),
-		enrichers.NewGitverseLinks(),
+		enrichers.NewJiraIssueKeys(repositoriesManager),
+		enrichers.NewGitverseLinks(repositoriesManager),
 	); err != nil {
 		logger.Fatal(err)
 	}
@@ -47,7 +53,7 @@ func main() {
 	jiraClient, jiraErr := jira.NewJiraClient()
 	if jiraErr != nil {
 		logger.Fatal(jiraErr)
-	} 
+	}
 
 	dispatcher := events.NewDispatcher(
 		manager,

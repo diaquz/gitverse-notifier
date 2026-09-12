@@ -17,6 +17,7 @@ import (
 type HttpServer struct {
 	addr       string
 	dispatcher *events.Dispatcher
+	accounts   gin.Accounts
 }
 
 func NewHttpServer(dispatcher *events.Dispatcher) *HttpServer {
@@ -25,6 +26,9 @@ func NewHttpServer(dispatcher *events.Dispatcher) *HttpServer {
 	return &HttpServer{
 		addr:       addr,
 		dispatcher: dispatcher,
+		accounts: gin.Accounts{
+			config.GlobalConfig.BasicAuthUser: config.GlobalConfig.BasicAuthPassword,
+		},
 	}
 }
 
@@ -52,6 +56,7 @@ func (s *HttpServer) registerGitverseRouterGroup(eng *gin.Engine) {
 	group := eng.Group("/gitverse")
 
 	{
+		group.Use(gin.BasicAuth(s.accounts))
 		group.GET("/health", s.health)
 		group.POST("/event", s.handleEvent)
 	}

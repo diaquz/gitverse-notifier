@@ -36,9 +36,21 @@ make docker
 | `GITVERSE_BASE_URL` | Ссылка на гитверс для использования в уведомлениях | — |
 
 
+## Конфигурация репозиториев
+
+Файлы с настройками репозиториев лежат в `configs/repositories/*.yml`, для примера есть `configs/repositories/default.yml`.
+
+```yaml
+repository: any
+# Базовый URL gitverse для ссылок
+url: ""
+# Коды проектов Jira
+allowed_jira_projects: []
+```
+
 ## Конфигурация правил уведомления
 
-Файлы с правилами уведомлений лежат `actions/*.yml`, для примера есть `actions/default.yml`. В них указывается имя репозитория (any для всех) и список правил.
+Файлы с правилами уведомлений лежат в `configs/actions/*.yml`, для примера есть `configs/actions/default.yml`. В них указывается имя репозитория (any для всех) и список правил.
 Например:
 
 ```yaml
@@ -92,10 +104,10 @@ actions:
 
 ## Шаблоны
 
-Файлы внутри `templates/**/*.tmpl` используются как go template.
+Файлы внутри `configs/templates/**/*.tmpl` используются как go template.
 Регистрируются с именами вида:
-- `templates/jira/pr_opened.tmpl` -> `jira/pr_opened`
-- `templates/telegram/pr_comment.tmpl` -> `telegram/pr_comment`
+- `configs/templates/jira/pr_opened.tmpl` -> `jira/pr_opened`
+- `configs/templates/telegram/pr_comment.tmpl` -> `telegram/pr_comment`
 
 Имена шаблонов можно указываться в action->template.
 
@@ -112,10 +124,12 @@ actions:
 
 - Из залоговка PR - берутся похожие на номера строки из начала, например  `JIRA-1 Fix` или `JIRA-1 JIRA-2 Fix`
 - Из имени ветки (branch или ref)
+- Ключи фильтруются по `allowed_jira_projects` из настроек репозитория
 
 ## В планах
 
-- Возможность указать фильтр для задач JIRA для репозитория, чтобы случайно не отправлять уведомления в другие задачи
 - Отправка уведомлений в тг
-- Аутентификация
 - Расширить логирование
+- Добавить фильтрацию по результату для cicd.status
+- добавить обратку skip_empty
+- добавить интеграцию с gitverse (обновление заголовка PR для указания ссылки на задачу)

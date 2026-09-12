@@ -13,11 +13,16 @@ var GlobalConfig *Config
 
 type Config struct {
 	Root       string
-	LogDirPath string
+	LogDirPath string `mapstructure:"LOG_DIR_PATH"`
 
-	TemplatesDirPath string `mapstructure:"TEMPLATES_DIR_PATH"`
-	TemplatesPattern string `mapstructure:"TEMPLATES_PATTERN"`
-	ActionsDirPath   string `mapstructure:"ACTIONS_DIR_PATH"`
+	ConfigsDirPath      string `mapstructure:"CONFIGS_DIR_PATH"`
+	TemplatesDirPath    string `mapstructure:"TEMPLATES_DIR_PATH"`
+	TemplatesPattern    string `mapstructure:"TEMPLATES_PATTERN"`
+	ActionsDirPath      string `mapstructure:"ACTIONS_DIR_PATH"`
+	RepositoriesDirPath string `mapstructure:"REPOSITORIES_DIR_PATH"`
+
+	BasicAuthUser     string `mapstructure:"BASIC_AUTH_USER"`
+	BasicAuthPassword string `mapstructure:"BASIC_AUTH_PASSWORD"`
 
 	BindHost    string `mapstructure:"BIND_HOST"`
 	HTTPPort    string `mapstructure:"HTTPD_PORT"`
@@ -46,12 +51,16 @@ func Setup(configPath string) {
 
 func getDefaultConfig() Config {
 	rootPath := getPwdDirPath()
-	actionsPath := filepath.Join(rootPath, "actions")
-	templatesPath := filepath.Join(rootPath, "templates")
+
 	dataFolderPath := filepath.Join(rootPath, "data")
 	logDirPath := filepath.Join(dataFolderPath, "logs")
 
-	folders := []string{dataFolderPath, logDirPath, actionsPath, templatesPath}
+	configPath := filepath.Join(rootPath, "configs")
+	actionsPath := filepath.Join(configPath, "actions")
+	templatesPath := filepath.Join(configPath, "templates")
+	repositoriesPath := filepath.Join(configPath, "repositories")
+
+	folders := []string{dataFolderPath, logDirPath, configPath, actionsPath, templatesPath, repositoriesPath}
 	for i := range folders {
 		if err := EnsureDirExist(folders[i]); err != nil {
 			log.Fatalf("Create folder failed: %s", err.Error())
@@ -59,16 +68,18 @@ func getDefaultConfig() Config {
 	}
 
 	return Config{
-		Root:             rootPath,
-		LogDirPath:       logDirPath,
-		ActionsDirPath:   actionsPath,
-		TemplatesDirPath: templatesPath,
-		BindHost:         "0.0.0.0",
-		HTTPPort:         "9001",
-		LogLevel:         "INFO",
-		LogFileName:      "gitverse-notifier.log",
-		LanguageCode:     "ru",
-		TemplatesPattern: "**/*.tmpl",
+		Root:                rootPath,
+		LogDirPath:          logDirPath,
+		ConfigsDirPath:      configPath,
+		ActionsDirPath:      actionsPath,
+		TemplatesDirPath:    templatesPath,
+		RepositoriesDirPath: repositoriesPath,
+		BindHost:            "0.0.0.0",
+		HTTPPort:            "9001",
+		LogLevel:            "INFO",
+		LogFileName:         "gitverse-notifier.log",
+		LanguageCode:        "ru",
+		TemplatesPattern:    "**/*.tmpl",
 	}
 }
 
