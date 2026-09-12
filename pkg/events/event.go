@@ -84,13 +84,9 @@ func ResolveEventType(event, eventType, action string) (EventType, error) {
 
 	eventMapping := map[string]EventType{
 		"push.push":     BranchPush,
-		"push.":         BranchPush,
 		"create.create": BranchCreated,
-		"create.":       BranchCreated,
 		"delete.delete": BranchDeleted,
-		"delete.":       BranchDeleted,
 		"status.status": CICDStatus,
-		"status.":       CICDStatus,
 
 		"pull_request_approved.pull_request_review_approved": PullRequestReviewApproved,
 		"pull_request_rejected.pull_request_review_rejected": PullRequestReviewRejected,
@@ -103,7 +99,6 @@ func ResolveEventType(event, eventType, action string) (EventType, error) {
 		"pull_request.pull_request.closed":           PullRequestClosed,
 		"pull_request.pull_request.edited":           PullRequestEdited,
 		"pull_request.pull_request.synchronized":     PullRequestSynchronized,
-		"pull_request.pull_request.synchronize":      PullRequestSynchronized,
 		"pull_request.pull_request.review_requested": PullRequestReviewRequested,
 	}
 
