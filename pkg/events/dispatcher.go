@@ -21,34 +21,32 @@ func NewDispatcher(manager *ActionsManager, handlers ...ActionHandler) *Dispatch
 	return d
 }
 
-func (d *Dispatcher) Dispatch(ctx context.Context, ev Event) {
-	if ev.Type == Unknown {
-		logger.Warnf("skip unknown gitverse event repo=%s", ev.Repository)
+func (d *Dispatcher) Dispatch(ctx context.Context, event Event) {
+	if event.Type == Unknown {
+		logger.Warnf("[EventDispath] skip unknown event for repository=%s", event.Repository)
 		return
 	}
 
-	rules := d.manager.ActionsFor(ev.Repository, ev)
+	rules := d.manager.ActionsFor(event.Repository, event)
 	if len(rules) == 0 {
-		logger.Debugf("no actions for event=%s repo=%s", ev.Type, ev.Repository)
+		logger.Debugf("[EventDispath] no actions for event=%s repository=%s", event.Type, event.Repository)
 		return
 	}
 
 	for _, rule := range rules {
 		handler, ok := d.handlers[rule.Action]
 		if !ok {
-			logger.Errorf("no handler registered for action %q (event=%s repo=%s)", rule.Action, ev.Type, ev.Repository)
+			logger.Errorf("no handler registered for action %q event=%s repository=%s", rule.Action, event.Type, event.Repository)
 			continue
 		}
-		if err := handler.Run(ctx, ev, rule); err != nil {
-			logger.Errorf("action %s failed for event=%s repo=%s: %v", rule.Action, ev.Type, ev.Repository, err)
+
+		if err := handler.Run(ctx, event, rule); err != nil {
+			logger.Errorf("action %s failed for event=%s repository=%s: %v", rule.Action, event.Type, event.Repository, err)
 		}
 	}
 }
 
 func (d *Dispatcher) Register(handler ActionHandler) error {
-	if d.handlers == nil {
-		d.handlers = make(map[string]ActionHandler)
-	}
 	d.handlers[handler.Name()] = handler
 	return nil
 }

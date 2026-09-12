@@ -24,7 +24,7 @@ actions:
     template: new-comment
 
   - on: branch.push
-    branch: [main, develop]
+    branch: main
     action: telegram.notify
 
   - on: branch.created

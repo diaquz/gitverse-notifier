@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"gitverse-notifier/pkg/config"
+	"gitverse-notifier/pkg/logger"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,22 +11,45 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	DefaultRepository = "any"
+)
+
+// Тип ActionSettings хранит описанный пользователем список действий для конкретного репозитория
 type ActionSettings struct {
-	Repository string
-	Actions    []ActionRule
+	Repository string       `yaml:"repository"`
+	Actions    []ActionRule `yaml:"actions"`
 }
 
-func (s *ActionSettings) ActionsByEvent(event EventType) []ActionRule {
-	if s == nil {
-		return nil
-	}
-	out := make([]ActionRule, 0)
+// ActionsByEvent возвращает список действий, которые должны выполняться для указанного события
+func (s *ActionSettings) ActionsByEvent(event Event) []ActionRule {
+	actions := make([]ActionRule, 0)
 	for _, rule := range s.Actions {
-		if rule.On == event {
-			out = append(out, rule)
+		matched := true
+
+		if rule.On == event.Type {
+			matched = matched && true
+		}
+		if rule.Branch == "" || event.Branch == rule.Branch {
+			matched = matched && true
+		}
+
+		if matched {
+			actions = append(actions, rule)
 		}
 	}
-	return out
+
+	return actions
+}
+
+func (s *ActionSettings) RenderActionsCodes() string {
+
+	codes := make([]string, len(s.Actions))
+	for _, action := range s.Actions {
+		codes = append(codes, action.Action)
+	}
+
+	return strings.Join(codes, ", ")
 }
 
 type ActionsManager struct {
@@ -33,44 +57,21 @@ type ActionsManager struct {
 	defaultSetting ActionSettings
 }
 
-type actionsFileYAML struct {
-	Repository string          `yaml:"repository"`
-	Actions    []actionRuleYAML `yaml:"actions"`
-}
-
-type actionRuleYAML struct {
-	On        string        `yaml:"on"`
-	Action    string        `yaml:"action"`
-	Branch    stringOrSlice `yaml:"branch"`
-	Template  string        `yaml:"template"`
-	SkipEmpty bool          `yaml:"skip_empty"`
-}
-
-type stringOrSlice []string
-
-func (s *stringOrSlice) UnmarshalYAML(value *yaml.Node) error {
-	switch value.Kind {
-	case yaml.ScalarNode:
-		var single string
-		if err := value.Decode(&single); err != nil {
-			return err
-		}
-		if single != "" {
-			*s = []string{single}
-		}
+func (m *ActionsManager) ActionsFor(repository string, event Event) []ActionRule {
+	settings := m.ActionSettingsByRepository(repository)
+	if settings == nil || event.Type == Unknown {
 		return nil
-	case yaml.SequenceNode:
-		var many []string
-		if err := value.Decode(&many); err != nil {
-			return err
-		}
-		*s = many
-		return nil
-	case yaml.AliasNode:
-		return s.UnmarshalYAML(value.Alias)
-	default:
-		return fmt.Errorf("branch must be a string or list of strings")
 	}
+
+	matched := settings.ActionsByEvent(event)
+	return matched
+}
+
+func (m *ActionsManager) ActionSettingsByRepository(repository string) *ActionSettings {
+	if settings, ok := m.mapping[repository]; ok {
+		return settings
+	}
+	return &m.defaultSetting
 }
 
 func SetupActionsManager() (*ActionsManager, error) {
@@ -86,11 +87,14 @@ func SetupActionsManager() (*ActionsManager, error) {
 
 	var defaultSettingsInitialized bool
 	for _, entry := range entries {
+		name := entry.Name()
+		
 		if entry.IsDir() {
+			logger.Debugf("[ActionsSetup] directory %s skipped", name)
 			continue
 		}
-		name := entry.Name()
 		if !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") {
+			logger.Debugf("[ActionsSetup] file %s skipped", name)
 			continue
 		}
 
@@ -100,17 +104,18 @@ func SetupActionsManager() (*ActionsManager, error) {
 			return nil, err
 		}
 
-		repoKey := normalizeRepoKey(settings.Repository)
-		if repoKey == "any" {
+		if settings.Repository == DefaultRepository {
 			manager.defaultSetting = *settings
 			defaultSettingsInitialized = true
 			continue
 		}
-		manager.mapping[repoKey] = settings
+
+		manager.mapping[settings.Repository] = settings
+		logger.Debugf("[ActionsSetup] loaded actions settings (%s) for repository %s: %s", name, settings.Repository, settings.RenderActionsCodes())
 	}
 
 	if !defaultSettingsInitialized {
-		return nil, fmt.Errorf("default actions config (repository: any) is required")
+		return nil, fmt.Errorf("default actions config (repository: any) is missing")
 	}
 
 	return manager, nil
@@ -122,70 +127,20 @@ func loadActionSettings(path string) (*ActionSettings, error) {
 		return nil, fmt.Errorf("failed to read %s: %w", path, err)
 	}
 
-	var file actionsFileYAML
-	if err := yaml.Unmarshal(data, &file); err != nil {
-		return nil, fmt.Errorf("dailed to parse %s: %w", path, err)
+	var settings ActionSettings
+	if err := yaml.Unmarshal(data, &settings); err != nil {
+		return nil, fmt.Errorf("failed to parse actions settings %s: %w", path, err)
 	}
 
-	settings := &ActionSettings{
-		Repository: file.Repository,
-		Actions:    make([]ActionRule, 0, len(file.Actions)),
-	}
+	for _, action := range settings.Actions {
+		eventType, ok := ParseEventType(action.OnCode)
 
-	for _, raw := range file.Actions {
-		eventType, ok := ParseEventType(raw.On)
 		if !ok {
-			return nil, fmt.Errorf("actions for unknown event '%s' in %q", raw.On, path)
+			return nil, fmt.Errorf("action for unknown event '%s' in %q", action.OnCode, path)
 		}
-		settings.Actions = append(settings.Actions, ActionRule{
-			On:        eventType,
-			Action:    strings.TrimSpace(raw.Action),
-			Branches:  []string(raw.Branch),
-			Template:  raw.Template,
-			SkipEmpty: raw.SkipEmpty,
-		})
+
+		action.On = eventType
 	}
 
-	return settings, nil
-}
-
-func (m *ActionsManager) ActionSettingsByRepository(repository string) *ActionSettings {
-	if settings, ok := m.mapping[normalizeRepoKey(repository)]; ok {
-		return settings
-	}
-	return &m.defaultSetting
-}
-
-func (m *ActionsManager) ActionsFor(repository string, ev Event) []ActionRule {
-	settings := m.ActionSettingsByRepository(repository)
-	if settings == nil || ev.Type == Unknown {
-		return nil
-	}
-
-	matched := settings.ActionsByEvent(ev.Type)
-	if len(matched) == 0 {
-		return nil
-	}
-
-	branch := BranchName(ev.Ref)
-	out := make([]ActionRule, 0, len(matched))
-	for _, rule := range matched {
-		if len(rule.Branches) == 0 || branchMatches(branch, rule.Branches) {
-			out = append(out, rule)
-		}
-	}
-	return out
-}
-
-func branchMatches(branch string, allowed []string) bool {
-	for _, want := range allowed {
-		if branch == strings.TrimSpace(want) {
-			return true
-		}
-	}
-	return false
-}
-
-func normalizeRepoKey(repo string) string {
-	return strings.ToLower(strings.TrimSpace(repo))
+	return &settings, nil
 }

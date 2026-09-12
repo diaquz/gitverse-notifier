@@ -1,7 +1,6 @@
 package events
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -28,91 +27,90 @@ const (
 	CICDStatus EventType = "cicd.status"
 )
 
+type Actor struct {
+	ID    int64
+	Name  string
+	Email string
+}
+
+type PullRequestInfo struct {
+	Number int
+	Title  string
+	Body   string
+	State  string
+	Author Actor
+}
+
+type CommentInfo struct {
+	Body   string
+	Author Actor
+}
+
+type PushInfo struct {
+	Before       string
+	After        string
+	TotalCommits int
+}
+
+type StatusInfo struct {
+	State       string
+	Context     string
+	Description string
+	SHA         string
+}
+
 type Event struct {
-	Type       EventType
-	Repository string
-	Action     string
-	Ref        string
-
-	PullRequestInfo struct {
-	}
-	PushInfo struct {
-	}
-	Sender struct {
-	}
-
-	raw json.RawMessage
+	Type        EventType
+	Action      string
+	Ref         string
+	Branch      string
+	Repository  string
+	Sender      Actor
+	PullRequest PullRequestInfo
+	Comment     CommentInfo
+	Push        PushInfo
+	Status      StatusInfo
 }
 
-type payloadMeta struct {
-	Action     string `json:"action"`
-	Ref        string `json:"ref"`
-	Repository struct {
-		FullName      string `json:"fullName"`
-		FullNameSnake string `json:"full_name"`
-	} `json:"repository"`
-}
-
-func ParseEvent(event, eventType string, body []byte) (Event, error) {
-	ev := Event{
-		raw: append(json.RawMessage(nil), body...),
-	}
-
-	var meta payloadMeta
-	if len(body) > 0 {
-		if err := json.Unmarshal(body, &meta); err != nil {
-			return ev, fmt.Errorf("invalid event json: %w", err)
-		}
-	}
-
-	ev.Action = meta.Action
-	ev.Ref = meta.Ref
-	ev.Repository = meta.Repository.FullName
-	if ev.Repository == "" {
-		ev.Repository = meta.Repository.FullNameSnake
-	}
-
-	ev.Type = mapEventType(event, eventType, meta.Action)
-
-	return ev, nil
-}
-
-func mapEventType(event, eventType, action string) EventType {
+func ResolveEventType(event, eventType, action string) (EventType, error) {
 	event = strings.ToLower(strings.TrimSpace(event))
 	eventType = strings.ToLower(strings.TrimSpace(eventType))
 	action = strings.ToLower(strings.TrimSpace(action))
 
-	event_mapping := map[string]EventType{
-		// event + event_type
+	eventMapping := map[string]EventType{
 		"push.push":     BranchPush,
+		"push.":         BranchPush,
 		"create.create": BranchCreated,
+		"create.":       BranchCreated,
 		"delete.delete": BranchDeleted,
+		"delete.":       BranchDeleted,
 		"status.status": CICDStatus,
+		"status.":       CICDStatus,
+
 		"pull_request_approved.pull_request_review_approved": PullRequestReviewApproved,
 		"pull_request_rejected.pull_request_review_rejected": PullRequestReviewRejected,
 		"pull_request_comment.pull_request_review_comment":   PullRequestReviewComment,
-		"issue_comment.pull_request_review_comment":          PullRequestComment,
+		"issue_comment.pull_request_comm'ent":                 PullRequestComment,
 		"pull_request.pull_request_review_request":           PullRequestReviewRequested,
 		"pull_request.pull_request_sync":                     PullRequestSynchronized,
-		// event + event_type + action
-		"pull_request.pull_request.pull_request_review_request": PullRequestReviewRequested,
-		"pull_request.pull_request.pull_request_sync":           PullRequestSynchronized,
-		"pull_request.pull_request.opened":                      PullRequestOpened,
-		"pull_request.pull_request.closed":                      PullRequestClosed,
-		"pull_request.pull_request.edited":                      PullRequestEdited,
-		"pull_request.pull_request.synchronized":                PullRequestSynchronized,
-		"pull_request.pull_request.review_requested":            PullRequestReviewRequested,
+
+		"pull_request.pull_request.opened":           PullRequestOpened,
+		"pull_request.pull_request.closed":           PullRequestClosed,
+		"pull_request.pull_request.edited":           PullRequestEdited,
+		"pull_request.pull_request.synchronized":     PullRequestSynchronized,
+		"pull_request.pull_request.synchronize":      PullRequestSynchronized,
+		"pull_request.pull_request.review_requested": PullRequestReviewRequested,
 	}
 
-	if value, ok := event_mapping[fmt.Sprintf("%s.%s.%s", event, eventType, action)]; ok {
-		return value
+	if value, ok := eventMapping[fmt.Sprintf("%s.%s.%s", event, eventType, action)]; ok {
+		return value, nil
 	}
 
-	if value, ok := event_mapping[fmt.Sprintf("%s.%s", event, eventType)]; ok {
-		return value
+	if value, ok := eventMapping[fmt.Sprintf("%s.%s", event, eventType)]; ok {
+		return value, nil
 	}
 
-	return Unknown
+	return Unknown, fmt.Errorf("failed to detect event type for %s.%s, action = %s", event, eventType, action)
 }
 
 func ParseEventType(s string) (EventType, bool) {

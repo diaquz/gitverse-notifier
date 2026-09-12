@@ -4,10 +4,11 @@ import "context"
 
 type ActionRule struct {
 	On        EventType
-	Action    string
-	Branches  []string
-	Template  string
-	SkipEmpty bool
+	OnCode    string `yaml:"on"`
+	Action    string `yaml:"action"`
+	Branch    string `yaml:"branch"`
+	Template  string `yaml:"template"`
+	SkipEmpty bool   `yaml:"skip_empty"`
 }
 
 type ActionHandler interface {

@@ -8,6 +8,7 @@ import (
 
 	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/events"
+	"gitverse-notifier/pkg/events/parsers"
 	"gitverse-notifier/pkg/logger"
 
 	"github.com/gin-gonic/gin"
@@ -68,9 +69,9 @@ func (s *HttpServer) handleEvent(ctx *gin.Context) {
 		return
 	}
 
-	event := ctx.Request.Header.Get("X-Gitverse-Event")
-	eventType := ctx.Request.Header.Get("X-Gitverse-Event-Type")
-	ev, err := events.ParseEvent(event, eventType, body)
+	eventName := ctx.Request.Header.Get("X-Gitverse-Event")
+	eventTypeName := ctx.Request.Header.Get("X-Gitverse-Event-Type")
+	event, err := parsers.ParseEvent(eventName, eventTypeName, body)
 	if err != nil {
 		logger.Errorf("failed to parse gitverse event: %v", err)
 		logger.Errorf("headers=%v body=%s", ctx.Request.Header, string(body))
@@ -80,5 +81,5 @@ func (s *HttpServer) handleEvent(ctx *gin.Context) {
 
 	go func(event events.Event) {
 		s.dispatcher.Dispatch(context.Background(), event)
-	}(ev)
+	}(event)
 }
