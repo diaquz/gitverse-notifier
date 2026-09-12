@@ -2,7 +2,7 @@ FROM golang:1.27.1-trixie AS stage-build
 
 ARG TARGETARCH
 ARG VERSION
-ARG CHECK_VERSION=1.0.9
+ARG COMMIT
 
 ENV VERSION=$VERSION
 ENV GOPATH=/go
@@ -20,7 +20,7 @@ COPY Makefile .
 
 RUN go mod download -x
 
-RUN make build -s \
+RUN make build -s COMMIT=${COMMIT} VERSION=${VERSION} \
     && set -x && ls -al . \
     && mv /opt/gitverse_notifier/build/gitverse_notifier /opt/gitverse_notifier/gitverse_notifier
 
