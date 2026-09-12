@@ -75,7 +75,7 @@ func (m *ActionsManager) ActionSettingsByRepository(repository string) *ActionSe
 }
 
 func SetupActionsManager() (*ActionsManager, error) {
-	actionsDir := config.GlobalConfig.ActionDirPath
+	actionsDir := config.GlobalConfig.ActionsDirPath
 	entries, err := os.ReadDir(actionsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read actions dir %s: %w", actionsDir, err)

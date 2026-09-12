@@ -6,9 +6,12 @@ import (
 	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/actions"
+	"gitverse-notifier/pkg/events/enrichers"
+	"gitverse-notifier/pkg/events/parsers"
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/logger"
 	"gitverse-notifier/pkg/server"
+	"gitverse-notifier/pkg/templates"
 )
 
 var (
@@ -29,16 +32,24 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	var jiraClient *jira.JiraClient
-	if client, err := jira.NewJiraClient(); err != nil {
-		logger.Warnf("jira client not configured: %v", err)
-	} else {
-		jiraClient = client
+	engine, err := templates.SetupTemplateEngine()
+	if err != nil {
+		logger.Fatal(err)
 	}
+
+	if err := parsers.SetupEventParser(enrichers.NewJiraIssueKeys()); err != nil {
+		logger.Fatal(err)
+	}
+
+	jiraClient, jiraErr := jira.NewJiraClient()
+	if jiraErr != nil {
+		logger.Fatal(jiraErr)
+	} 
 
 	dispatcher := events.NewDispatcher(
 		manager,
-		actions.NewJiraCommentIssue(jiraClient),
+		actions.NewJiraCommentIssue(jiraClient, engine),
+		actions.NewTelegramNotify(engine),
 	)
 
 	srv := server.NewHttpServer(dispatcher)

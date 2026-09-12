@@ -70,6 +70,7 @@ type Event struct {
 	Comment     CommentInfo
 	Push        PushInfo
 	Status      StatusInfo
+	IssueKeys   []string
 }
 
 func ResolveEventType(event, eventType, action string) (EventType, error) {
@@ -90,7 +91,7 @@ func ResolveEventType(event, eventType, action string) (EventType, error) {
 		"pull_request_approved.pull_request_review_approved": PullRequestReviewApproved,
 		"pull_request_rejected.pull_request_review_rejected": PullRequestReviewRejected,
 		"pull_request_comment.pull_request_review_comment":   PullRequestReviewComment,
-		"issue_comment.pull_request_comm'ent":                 PullRequestComment,
+		"issue_comment.pull_request_comment":                 PullRequestComment,
 		"pull_request.pull_request_review_request":           PullRequestReviewRequested,
 		"pull_request.pull_request_sync":                     PullRequestSynchronized,
 

@@ -4,28 +4,28 @@ actions:
   - on: pull_request.opened
     action: jira.comment_issue
 
-  - on: pull_request.opened
-    action: gitverse.update-title
+  # - on: pull_request.opened
+  #  action: gitverse.update-title
 
   - on: pull_request.review_requested
     action: telegram.notify
-    template: tag-approvers
 
   - on: pull_request.review_approved
     action: telegram.notify
-    template: tag-author
+    template: default
 
-  - on: pull_request.review_comment
-    action: pass
+  # - on: pull_request.review_comment
+  #  action: pass
 
   - on: pull_request.comment
     action: telegram.notify
     skip_empty: true
-    template: new-comment
+    template: pr_new-comment
 
   - on: branch.push
     branch: main
     action: telegram.notify
 
   - on: branch.created
-    action: skip
+    action: jira.comment_issue
+    template: pr_created

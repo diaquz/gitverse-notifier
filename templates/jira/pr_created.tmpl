@@ -1,0 +1,5 @@
+{{/* Available: .Sender .PullRequest .Repository .Branch .Action .Type .Comment .Push .Status; funcs: jiraEscape, trim */}}
+*{{jiraEscape .Sender.Name}}* mentioned this issue in pull request *{{jiraEscape .PullRequest.Title}}*{{if .Repository}} ({{jiraEscape .Repository}}){{end}}
+{{- if .Branch}}
+Branch: *{{jiraEscape .Branch}}*
+{{- end}}

@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+
 	"gitverse-notifier/pkg/logger"
 )
 

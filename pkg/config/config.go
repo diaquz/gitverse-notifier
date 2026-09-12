@@ -1,19 +1,23 @@
 package config
 
 import (
-	"github.com/spf13/viper"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/viper"
 )
 
 var GlobalConfig *Config
 
 type Config struct {
-	Root          string
-	LogDirPath    string
-	ActionDirPath string
+	Root       string
+	LogDirPath string
+
+	TemplatesDirPath string `mapstructure:"TEMPLATES_DIR_PATH"`
+	TemplatesPattern string `mapstructure:"TEMPLATES_PATTERN"`
+	ActionsDirPath   string `mapstructure:"ACTIONS_DIR_PATH"`
 
 	BindHost    string `mapstructure:"BIND_HOST"`
 	HTTPPort    string `mapstructure:"HTTPD_PORT"`
@@ -36,16 +40,16 @@ func Setup(configPath string) {
 	loadConfigFromFile(configPath, &conf)
 	GlobalConfig = &conf
 	log.Printf("%+v\n", GlobalConfig)
-
 }
 
 func getDefaultConfig() Config {
 	rootPath := getPwdDirPath()
 	actionsPath := filepath.Join(rootPath, "actions")
+	templatesPath := filepath.Join(rootPath, "templates")
 	dataFolderPath := filepath.Join(rootPath, "data")
 	LogDirPath := filepath.Join(dataFolderPath, "logs")
 
-	folders := []string{dataFolderPath, LogDirPath, actionsPath}
+	folders := []string{dataFolderPath, LogDirPath, actionsPath, templatesPath}
 	for i := range folders {
 		if err := EnsureDirExist(folders[i]); err != nil {
 			log.Fatalf("Create folder failed: %s", err.Error())
@@ -53,30 +57,16 @@ func getDefaultConfig() Config {
 	}
 
 	return Config{
-		Root:          rootPath,
-		ActionDirPath: actionsPath,
-		BindHost:      "0.0.0.0",
-		HTTPPort:      "9001",
-		LogLevel:      "INFO",
-		LogFileName:   "gitverse-notifier.log",
-		LanguageCode:  "ru",
+		Root:             rootPath,
+		ActionsDirPath:   actionsPath,
+		TemplatesDirPath: templatesPath,
+		BindHost:         "0.0.0.0",
+		HTTPPort:         "9001",
+		LogLevel:         "INFO",
+		LogFileName:      "gitverse-notifier.log",
+		LanguageCode:     "ru",
+		TemplatesPattern: "*.tmpl",
 	}
-}
-
-func ExistFile(path string) string {
-	if FileExists(path) {
-		return path
-	}
-	return ""
-}
-
-func FileExists(name string) bool {
-	if _, err := os.Stat(name); err != nil {
-		if os.IsNotExist(err) {
-			return false
-		}
-	}
-	return true
 }
 
 func EnsureDirExist(path string) error {
@@ -110,9 +100,8 @@ func loadConfigFromEnv(conf *Config) {
 		}
 	}
 	if err := envViper.Unmarshal(conf); err == nil {
-		log.Println("Load config from env")
+		log.Println("Successfully loaded config from env")
 	}
-
 }
 
 func loadConfigFromFile(path string, conf *Config) {
@@ -122,12 +111,12 @@ func loadConfigFromFile(path string, conf *Config) {
 		fileViper.SetConfigFile(path)
 		if err = fileViper.ReadInConfig(); err == nil {
 			if err = fileViper.Unmarshal(conf); err == nil {
-				log.Printf("Load config from %s success\n", path)
+				log.Printf("Successfully loaded config from %s", path)
 				return
 			}
 		}
 	}
 	if err != nil {
-		log.Fatalf("Load config from %s failed: %s\n", path, err)
+		log.Fatalf("failed to load config from %s: %s", path, err)
 	}
 }
