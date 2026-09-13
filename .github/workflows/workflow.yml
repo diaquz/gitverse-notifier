@@ -1,0 +1,27 @@
+name: workflow
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.27'
+
+    - name: Build
+      run: make build
+
+    - name: Test
+      run: go test ./... -race -count=1  -timeout 5m -coverprofile=coverage.out -covermode=atomic
+
+    - name: Show coverage
+      run: go tool cover -func=coverage.out
+

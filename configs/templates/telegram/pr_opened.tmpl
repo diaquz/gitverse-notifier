@@ -1,1 +1,1 @@
-[{{tgLink .Repository .RepositoryURL}}]{{if .IssueKeys}} [{{tgIssueURLs .IssueKeys}}] {{end}}{{tgLink .PullRequest.Author.Name .PullRequest.Author.URL}} открыл PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}
+\[{{tgLink .Repository .RepositoryURL}}]{{if .IssueKeys}} \[{{tgIssueURLs .IssueKeys}}] {{end}}{{tgLink .PullRequest.Author.Name .PullRequest.Author.URL}} открыл PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}
