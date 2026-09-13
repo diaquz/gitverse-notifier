@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 
+	"gitverse-notifier/pkg/dispath/handlers"
 	"gitverse-notifier/pkg/config"
-	"gitverse-notifier/pkg/events"
-	"gitverse-notifier/pkg/events/actions"
+	"gitverse-notifier/pkg/dispath"
 	"gitverse-notifier/pkg/events/enrichers"
 	"gitverse-notifier/pkg/events/parsers"
 	"gitverse-notifier/pkg/integrations/jira"
@@ -29,12 +29,7 @@ func main() {
 	config.Setup(configPath)
 	logger.SetupLogger(config.GlobalConfig)
 
-	manager, err := events.SetupActionsManager()
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	repositoriesManager, err := repositories.SetupRepositoriesManager()
+	manager, err := repositories.SetupRepositoriesManager()
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -45,8 +40,8 @@ func main() {
 	}
 
 	if err := parsers.SetupEventParser(
-		enrichers.NewJiraIssueKeys(repositoriesManager),
-		enrichers.NewGitverseLinks(repositoriesManager),
+		enrichers.NewJiraIssueKeys(manager),
+		enrichers.NewGitverseLinks(manager),
 	); err != nil {
 		logger.Fatal(err)
 	}
@@ -61,10 +56,10 @@ func main() {
 		logger.Fatal(tgErr)
 	}
 
-	dispatcher := events.NewDispatcher(
+	dispatcher := dispath.NewDispatcher(
 		manager,
-		actions.NewJiraCommentIssue(jiraClient, engine),
-		actions.NewTelegramNotify(tgClient, engine),
+		handlers.NewJiraCommentIssue(jiraClient, engine),
+		handlers.NewTelegramNotify(tgClient, engine),
 	)
 
 	srv := server.NewHttpServer(dispatcher)

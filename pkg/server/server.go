@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"gitverse-notifier/pkg/config"
+	"gitverse-notifier/pkg/dispath"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/parsers"
 	"gitverse-notifier/pkg/logger"
@@ -16,11 +17,11 @@ import (
 
 type HttpServer struct {
 	addr       string
-	dispatcher *events.Dispatcher
+	dispatcher *dispath.Dispatcher
 	accounts   gin.Accounts
 }
 
-func NewHttpServer(dispatcher *events.Dispatcher) *HttpServer {
+func NewHttpServer(dispatcher *dispath.Dispatcher) *HttpServer {
 	addr := net.JoinHostPort(config.GlobalConfig.BindHost, config.GlobalConfig.HTTPPort)
 
 	return &HttpServer{

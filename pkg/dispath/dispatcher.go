@@ -1,17 +1,19 @@
-package events
+package dispath
 
 import (
 	"context"
 
+	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
+	"gitverse-notifier/pkg/repositories"
 )
 
 type Dispatcher struct {
-	manager  *ActionsManager
+	manager  *repositories.RepositoriesManager
 	handlers map[string]ActionHandler
 }
 
-func NewDispatcher(manager *ActionsManager, handlers ...ActionHandler) *Dispatcher {
+func NewDispatcher(manager *repositories.RepositoriesManager, handlers ...ActionHandler) *Dispatcher {
 	d := &Dispatcher{
 		manager:  manager,
 		handlers: make(map[string]ActionHandler, len(handlers)),
@@ -22,8 +24,8 @@ func NewDispatcher(manager *ActionsManager, handlers ...ActionHandler) *Dispatch
 	return d
 }
 
-func (d *Dispatcher) Dispatch(ctx context.Context, event Event) {
-	if event.Type == Unknown {
+func (d *Dispatcher) Dispatch(ctx context.Context, event events.Event) {
+	if event.Type == events.Unknown {
 		logger.Warnf("[EventDispath] skip unknown event for repository=%s", event.Repository)
 		return
 	}
@@ -42,7 +44,7 @@ func (d *Dispatcher) Dispatch(ctx context.Context, event Event) {
 		}
 
 		logger.Debugf("[EventDispather] processing %s action for %s", handler.Name(), event.Type)
-		if err := handler.Run(ctx, event, rule); err != nil {
+		if err := handler.Run(ctx, event, &rule); err != nil {
 			logger.Errorf("action %s failed for event=%s repository=%s: %v", rule.Action, event.Type, event.Repository, err)
 		}
 	}

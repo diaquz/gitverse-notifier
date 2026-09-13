@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"gitverse-notifier/pkg/config"
+	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
 
 	"gopkg.in/yaml.v3"
@@ -16,29 +17,6 @@ const (
 	DefaultRepository = "any"
 )
 
-// RepositorySettings хранит настройки конкретного репозитория
-type RepositorySettings struct {
-	Repository          string   `yaml:"repository"`
-	Url                 string   `yaml:"url"`
-	AllowedJiraProjects []string `yaml:"allowed_jira_projects"`
-}
-
-// IsJiraCodeAllowed проверяет, разрешён ли код проекта Jira
-func (s *RepositorySettings) IsJiraCodeAllowed(code string) bool {
-	if len(s.AllowedJiraProjects) == 0 {
-		return true
-	}
-
-	code = strings.ToUpper(strings.TrimSpace(code))
-	for _, allowed := range s.AllowedJiraProjects {
-		if strings.HasPrefix(code, allowed) {
-			return true
-		}
-	}
-
-	return false
-}
-
 type RepositoriesManager struct {
 	mapping        map[string]*RepositorySettings
 	defaultSetting RepositorySettings
@@ -47,6 +25,16 @@ type RepositoriesManager struct {
 func (m *RepositoriesManager) IsJiraCodeAllowed(repository, code string) bool {
 	settings := m.SettingsByRepository(repository)
 	return settings.IsJiraCodeAllowed(code)
+}
+
+func (m *RepositoriesManager) ActionsFor(repository string, event events.Event) []events.ActionRule {
+	settings := m.SettingsByRepository(repository)
+	if settings == nil || event.Type == events.Unknown {
+		return nil
+	}
+
+	matched := settings.ActionsByEvent(event)
+	return matched
 }
 
 func (m *RepositoriesManager) SettingsByRepository(repository string) *RepositorySettings {
@@ -90,7 +78,6 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 			manager.defaultSetting = *settings
 			defaultSettingsInitialized = true
 			logger.Debugf("[RepositoriesSetup] loaded default repository settings (%s)", name)
-			continue
 		}
 
 		manager.mapping[settings.Repository] = settings
@@ -125,7 +112,14 @@ func loadRepositorySettings(path string) (*RepositorySettings, error) {
 
 	for i, code := range settings.AllowedJiraProjects {
 		settings.AllowedJiraProjects[i] = strings.ToUpper(strings.TrimSpace(code))
-		// TODO: Может быть буду добавлять "-" к номеру
+	}
+
+	for i := range settings.Actions {
+		eventType, ok := events.ParseEventType(settings.Actions[i].OnCode)
+		if !ok {
+			return nil, fmt.Errorf("action for unknown event '%s' in %q", settings.Actions[i].OnCode, path)
+		}
+		settings.Actions[i].On = eventType
 	}
 
 	return &settings, nil

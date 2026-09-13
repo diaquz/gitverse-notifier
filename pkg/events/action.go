@@ -1,7 +1,5 @@
 package events
 
-import "context"
-
 type ActionRule struct {
 	On        EventType `yaml:"-"`
 	OnCode    string    `yaml:"on"`
@@ -11,7 +9,16 @@ type ActionRule struct {
 	SkipEmpty bool      `yaml:"skip_empty"`
 }
 
-type ActionHandler interface {
-	Name() string
-	Run(ctx context.Context, ev Event, rule ActionRule) error
+func (rule *ActionRule) Allowed(event *Event) (allowed bool) {
+	if event == nil || rule.On != event.Type {
+		return
+	}
+	if rule.Branch != "" && event.Branch != rule.Branch {
+		return
+	}
+	if rule.SkipEmpty && event.Comment.Body == "" {
+		return
+	}
+
+	return true
 }

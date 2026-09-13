@@ -1,4 +1,4 @@
-package actions
+package handlers
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func (a *TelegramNotify) Name() string {
 	return "telegram.notify"
 }
 
-func (a *TelegramNotify) Run(ctx context.Context, ev events.Event, rule events.ActionRule) error {
+func (a *TelegramNotify) Run(ctx context.Context, ev events.Event, rule *events.ActionRule) error {
 	name := strings.TrimSpace(rule.Template)
 	if name == "" {
 		name = defaultTelegramTemplate

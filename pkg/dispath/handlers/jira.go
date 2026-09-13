@@ -1,4 +1,4 @@
-package actions
+package handlers
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func (a *JiraCommentIssue) Name() string {
 	return "jira.comment_issue"
 }
 
-func (a *JiraCommentIssue) Run(_ context.Context, ev events.Event, rule events.ActionRule) error {
+func (a *JiraCommentIssue) Run(_ context.Context, ev events.Event, rule *events.ActionRule) error {
 	templateName := strings.TrimSpace(rule.Template)
 	if templateName == "" {
 		templateName = defaultJiraTemplate
