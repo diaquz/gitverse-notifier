@@ -18,5 +18,8 @@ jobs:
       run: make build
 
     - name: Test
-      run: go test -v ./...
+      run: go test ./... -race -count=1  -timeout 5m -coverprofile=coverage.out -covermode=atomic
+
+    - name: Show coverage
+      run: go tool cover -func=coverage.out
 
