@@ -12,8 +12,11 @@ import (
 var GlobalConfig *Config
 
 type Config struct {
-	Root       string
+	Root string
+
 	LogDirPath string `mapstructure:"LOG_DIR_PATH"`
+	LogMaxSize int    `mapstructure:"LOG_MAX_SIZE"`
+	LogMaxAge  int    `mapstructure:"LOG_MAX_AGE"`
 
 	ConfigsDirPath      string `mapstructure:"CONFIGS_DIR_PATH"`
 	TemplatesDirPath    string `mapstructure:"TEMPLATES_DIR_PATH"`
@@ -72,6 +75,8 @@ func getDefaultConfig() Config {
 	return Config{
 		Root:                rootPath,
 		LogDirPath:          logDirPath,
+		LogMaxSize:          5,
+		LogMaxAge:           7,
 		ConfigsDirPath:      configPath,
 		TemplatesDirPath:    templatesPath,
 		RepositoriesDirPath: repositoriesPath,

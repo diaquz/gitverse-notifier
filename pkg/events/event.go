@@ -8,7 +8,7 @@ import (
 type EventType string
 
 const (
-	Unknown EventType = ""
+	Unknown EventType = "unknown"
 
 	PullRequestOpened          EventType = "pull_request.opened"
 	PullRequestClosed          EventType = "pull_request.closed"

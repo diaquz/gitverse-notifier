@@ -22,24 +22,22 @@ func (a *UtilsLog) Ready() bool {
 	return true
 }
 
-func (a *UtilsLog) Run(_ context.Context, ev events.Event, rule *events.ActionRule) error {
-	logger.Infof(
-		"[Action=%s] event=%s action=%q repository=%q branch=%q ref=%q sender=%q issue_keys=%q pr=%d title=%q comment=%q status=%q/%q template=%q",
-		a.Name(),
-		ev.Type,
-		ev.Action,
-		ev.Repository,
-		ev.Branch,
-		ev.Ref,
-		ev.Sender.Name,
-		strings.Join(ev.IssueKeys, ","),
-		ev.PullRequest.Number,
-		ev.PullRequest.Title,
-		ev.Comment.Body,
-		ev.Status.Context,
-		ev.Status.State,
-		rule.Template,
+func (a *UtilsLog) Run(ctx context.Context, ev events.Event, rule *events.ActionRule) error {
+	logger.Info(ctx, "event log",
+		"action", a.Name(),
+		"event", ev.Type,
+		"event_action", ev.Action,
+		"repository", ev.Repository,
+		"branch", ev.Branch,
+		"ref", ev.Ref,
+		"sender", ev.Sender.Name,
+		"issue_keys", strings.Join(ev.IssueKeys, ","),
+		"pr", ev.PullRequest.Number,
+		"title", ev.PullRequest.Title,
+		"comment", ev.Comment.Body,
+		"status_context", ev.Status.Context,
+		"status_state", ev.Status.State,
+		"template", rule.Template,
 	)
-
 	return nil
 }

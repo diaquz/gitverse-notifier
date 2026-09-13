@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"context"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
 )
@@ -16,7 +17,7 @@ func SetupEventParser(enrichers ...events.Enricher) error {
 	return nil
 }
 
-func ParseEvent(eventName, eventTypeName string, body []byte) (event events.Event, err error) {
+func ParseEvent(ctx context.Context, eventName, eventTypeName string, body []byte) (event events.Event, err error) {
 	if err := fillCommon(&event, body); err != nil {
 		return event, err
 	}
@@ -49,8 +50,13 @@ func ParseEvent(eventName, eventTypeName string, body []byte) (event events.Even
 	}
 
 	for _, enricher := range globalEventParser.enrichers {
-		if err := enricher.Enrich(&event); err != nil {
-			logger.Errorf("[EventParser] enricher %s failed for event=%s repository=%s: %v", enricher.Name(), event.Type, event.Repository, err)
+		if err := enricher.Enrich(ctx, &event); err != nil {
+			logger.Error(ctx, "event enriching failed",
+				"action", "event_parsing",
+				"enricher", enricher.Name(),
+				"event", event.Type,
+				"repository", event.Repository, 
+				"err", err)
 		}
 	}
 

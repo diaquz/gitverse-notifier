@@ -1,6 +1,7 @@
 package enrichers
 
 import (
+	"context"
 	"regexp"
 	"strings"
 
@@ -26,7 +27,7 @@ func (e *JiraIssueKeys) Name() string {
 	return "jira.issue_keys"
 }
 
-func (e *JiraIssueKeys) Enrich(event *events.Event) error {
+func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 	if event == nil {
 		return nil
 	}
@@ -44,7 +45,12 @@ func (e *JiraIssueKeys) Enrich(event *events.Event) error {
 		}
 
 		if !e.manager.IsJiraCodeAllowed(event.Repository, key) {
-			logger.Debugf("[JiraCodesEnricher] code %s is permited for repository %s", key, event.Repository)
+			logger.Debug(ctx, "jira issue key is permited",
+				"action", "event_parsing",
+				"enricher", e.Name(),
+				"issue-key", key,
+				"event", event.Type,
+				"repository", event.Repository)
 			return
 		}
 		seen[key] = struct{}{}

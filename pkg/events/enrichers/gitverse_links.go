@@ -1,6 +1,7 @@
 package enrichers
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -21,7 +22,7 @@ func (e *GitverseLinks) Name() string {
 	return "gitverse.links"
 }
 
-func (e *GitverseLinks) Enrich(event *events.Event) error {
+func (e *GitverseLinks) Enrich(_ context.Context, event *events.Event) error {
 	baseURL := e.baseURLFor(event.Repository)
 	if baseURL == "" {
 		return nil

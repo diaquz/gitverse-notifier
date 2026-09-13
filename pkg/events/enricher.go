@@ -1,6 +1,8 @@
 package events
 
+import "context"
+
 type Enricher interface {
 	Name() string
-	Enrich(event *Event) error
+	Enrich(ctx context.Context, event *Event) error
 }

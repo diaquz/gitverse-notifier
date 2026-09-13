@@ -30,22 +30,28 @@ func (a *TelegramNotify) Ready() bool {
 	return a.client != nil
 }
 
-func (a *TelegramNotify) Run(ctx context.Context, ev events.Event, rule *events.ActionRule) error {
+func (a *TelegramNotify) Run(ctx context.Context, event events.Event, rule *events.ActionRule) error {
 	name := strings.TrimSpace(rule.Template)
 	if name == "" {
 		name = defaultTelegramTemplate
 	}
 
-	body, err := a.templates.Render(name, templates.DataFromEvent(ev))
+	body, err := a.templates.Render(name, templates.DataFromEvent(event))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to redener template %s: %w", name, err)
 	}
-	logger.Debugf("[Action=%s] rendered telegram message body:\n%s", a.Name(), body)
+
+	logger.Debug(ctx, "rendered telegram message body", "action", a.Name(), "body", body)
 
 	if err := a.client.SendMessage(ctx, body); err != nil {
 		return fmt.Errorf("failed to send telegram notification: %w", err)
 	}
 
-	logger.Infof("[Action=%s] successfully sent telegram notification (repository=%s)", a.Name(), ev.Repository)
+	logger.Info(ctx, "successfully sent telegram notification",
+		"action", a.Name(),
+		"event", event.Type,
+		"template", name,
+		"repository", event.Repository,
+	)
 	return nil
 }

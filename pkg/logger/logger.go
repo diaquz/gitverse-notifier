@@ -1,139 +1,118 @@
 package logger
 
 import (
+	"context"
 	"fmt"
-	"log"
+	"io"
+	"log/slog"
+	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
-	"time"
+
+	"gitverse-notifier/pkg/config"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-type Level int8
+const logTimeFormat = "2006-01-02 15:04:05"
 
-const (
-	LevelDebug Level = iota
-	LevelInfo
-	LevelWarn
-	LevelError
-	LevelFatal
-	LevelPanic
+type ctxKey struct{}
+
+var defaultLogger = slog.New(
+	slog.NewTextHandler(
+		os.Stdout,
+		&slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		},
+	),
 )
 
-func (l Level) String() string {
-	switch l {
-	case LevelDebug:
-		return "DEBUG"
-	case LevelInfo:
-		return "INFO"
-	case LevelWarn:
-		return "WARN"
-	case LevelError:
-		return "ERROR"
-	case LevelFatal:
-		return "FATAL"
-	case LevelPanic:
-		return "PANIC"
+func SetupLogger(conf *config.Config) {
+	fileWriter := &lumberjack.Logger{
+		Filename:  filepath.Join(conf.LogDirPath, conf.LogFileName),
+		MaxSize:   conf.LogMaxSize,
+		MaxAge:    conf.LogMaxAge,
+		LocalTime: true,
+		Compress:  true,
 	}
-	return ""
+
+	writer := io.MultiWriter(fileWriter, os.Stdout)
+	handler := slog.NewTextHandler(writer, loggerHandlerOptions(conf))
+	defaultLogger = slog.New(handler)
+	slog.SetDefault(defaultLogger)
 }
 
-func ParseLevel(l string) Level {
-	switch l {
+func loggerHandlerOptions(conf *config.Config) *slog.HandlerOptions {
+	return &slog.HandlerOptions{
+		Level: parseLevel(conf.LogLevel),
+		AddSource: true,
+		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
+			if a.Key == slog.TimeKey && a.Value.Kind() == slog.KindTime {
+				return slog.String(slog.TimeKey, a.Value.Time().Format(logTimeFormat))
+			}
+
+			return a
+		},
+	}
+}
+
+func parseLevel(level string) slog.Level {
+	switch strings.ToUpper(level) {
 	case "DEBUG":
-		return LevelDebug
-	case "INFO":
-		return LevelInfo
+		return slog.LevelDebug
 	case "WARN":
-		return LevelWarn
+		return slog.LevelWarn
 	case "ERROR":
-		return LevelError
-	case "FATAL":
-		return LevelFatal
-	case "PANIC":
-		return LevelPanic
-	}
-	return LevelInfo
-}
-
-type Logger struct {
-	output *log.Logger
-	level     Level
-}
-
-func (l *Logger) Output(level Level, message string) {
-	if l.level > level {
-		return
-	}
-	pc, fileName, _, ok := runtime.Caller(2)
-	if !ok {
-		fileName = "unknown"
-	}
-	name := runtime.FuncForPC(pc).Name()
-	name = strings.Split(filepath.Base(name), ".")[0]
-	message = fmt.Sprintf("%s %s %s [%s] %s",
-		time.Now().Format(logTimeFormat), name,
-		filepath.Base(fileName), level, message)
-	switch level {
-	case LevelDebug:
-		l.output.Println(message)
-	case LevelInfo:
-		l.output.Println(message)
-	case LevelWarn:
-		l.output.Println(message)
-	case LevelError:
-		l.output.Println(message)
-	case LevelFatal:
-		l.output.Fatalln(message)
-	case LevelPanic:
-		l.output.Panicln(message)
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
 	}
 }
 
-func (l *Logger) Debug(v ...interface{}) {
-	l.Output(LevelDebug, fmt.Sprint(v...))
+func With(ctx context.Context, args ...any) context.Context {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return context.WithValue(ctx, ctxKey{}, FromContext(ctx).With(args...))
 }
 
-func (l *Logger) Debugf(format string, v ...interface{}) {
-	l.Output(LevelDebug, fmt.Sprintf(format, v...))
+// FromContext возвращает логгер для запроса, либо defaultLogger если контекст пустой.
+func FromContext(ctx context.Context) *slog.Logger {
+	if ctx != nil {
+		if log, ok := ctx.Value(ctxKey{}).(*slog.Logger); ok && log != nil {
+			return log
+		}
+	}
+
+	return defaultLogger
 }
 
-func (l *Logger) Info(v ...interface{}) {
-	l.Output(LevelInfo, fmt.Sprint(v...))
+func Debug(ctx context.Context, msg string, args ...any) {
+	FromContext(ctx).Debug(msg, args...)
 }
 
-func (l *Logger) Infof(format string, v ...interface{}) {
-	l.Output(LevelInfo, fmt.Sprintf(format, v...))
+func Info(ctx context.Context, msg string, args ...any) {
+	FromContext(ctx).Info(msg, args...)
 }
 
-func (l *Logger) Warn(v ...interface{}) {
-	l.Output(LevelWarn, fmt.Sprint(v...))
+func Warn(ctx context.Context, msg string, args ...any) {
+	FromContext(ctx).Warn(msg, args...)
 }
 
-func (l *Logger) Warnf(format string, v ...interface{}) {
-	l.Output(LevelWarn, fmt.Sprintf(format, v...))
+func Error(ctx context.Context, msg string, args ...any) {
+	FromContext(ctx).Error(msg, args...)
 }
 
-func (l *Logger) Error(v ...interface{}) {
-	l.Output(LevelError, fmt.Sprint(v...))
+// Fatal логирует ошибку на уровне ERROR и завершает программу
+// (у slog нет FATAL уровня).
+func Fatal(ctx context.Context, v ...any) {
+	FromContext(ctx).Error(fmt.Sprint(v...))
+	os.Exit(1)
 }
 
-func (l *Logger) Errorf(format string, v ...interface{}) {
-	l.Output(LevelError, fmt.Sprintf(format, v...))
-}
-
-func (l *Logger) Fatal(v ...interface{}) {
-	l.Output(LevelFatal, fmt.Sprint(v...))
-}
-
-func (l *Logger) Fatalf(format string, v ...interface{}) {
-	l.Output(LevelFatal, fmt.Sprintf(format, v...))
-}
-
-func (l *Logger) Panic(v ...interface{}) {
-	l.Output(LevelPanic, fmt.Sprint(v...))
-}
-
-func (l *Logger) Panicf(format string, v ...interface{}) {
-	l.Output(LevelPanic, fmt.Sprintf(format, v...))
+// Fatalf логирует ошибку на уровне ERROR и завершает программу
+// (у slog нет FATAL уровня).
+func Fatalf(ctx context.Context, format string, args ...any) {
+	FromContext(ctx).Error(fmt.Sprintf(format, args...))
+	os.Exit(1)
 }

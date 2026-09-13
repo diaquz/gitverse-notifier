@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	_ "fmt"
 	"strings"
 
 	"gitverse-notifier/pkg/events"
@@ -31,29 +30,38 @@ func (a *JiraCommentIssue) Ready() bool {
 	return a.client != nil
 }
 
-func (a *JiraCommentIssue) Run(_ context.Context, ev events.Event, rule *events.ActionRule) error {
+func (a *JiraCommentIssue) Run(ctx context.Context, event events.Event, rule *events.ActionRule) error {
 	templateName := strings.TrimSpace(rule.Template)
 	if templateName == "" {
 		templateName = defaultJiraTemplate
 	}
 
-	body, err := a.templates.Render(templateName, templates.DataFromEvent(ev))
+	body, err := a.templates.Render(templateName, templates.DataFromEvent(event))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to render template %s: %w", templateName, err)
 	}
-	logger.Debugf("rendered issue comment body:\n%s", body)
+	logger.Debug(ctx, "rendered issue comment body", "body", body)
 	
-	if len(ev.IssueKeys) == 0 {
-		logger.Infof("[Action=%s] no issue keys (repository=%s title=%q branch=%q)", a.Name(),  ev.Repository, ev.PullRequest.Title, ev.Branch)
+	if len(event.IssueKeys) == 0 {
+		logger.Info(ctx, "no issue keys found, skipping action",
+			"action", a.Name(),
+			"repository", event.Repository,
+			"title", event.PullRequest.Title,
+			"branch", event.Branch,
+		)
 		return nil
 	}
 
-	for _, key := range ev.IssueKeys {
+	for _, key := range event.IssueKeys {
 		if _, err := a.client.AddComment(key, body); err != nil {
-		 return fmt.Errorf("failed to comment on issue %s: %w", key, err)
+			return fmt.Errorf("failed to comment on issue %s: %w", key, err)
 		}
 
-		logger.Infof("[Action=%s] successfully commented on issue %s", a.Name(), key)
+		logger.Info(ctx, "successfully commented on issue",
+			"action", a.Name(),
+			"event", event.Type,
+			"issue", key,
+		)
 	}
 	return nil
 }

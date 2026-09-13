@@ -67,25 +67,46 @@ func (s *HttpServer) health(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"ok": true})
 }
 
-func (s *HttpServer) handleEvent(ctx *gin.Context) {
-	body, err := io.ReadAll(ctx.Request.Body)
-	if err != nil {
-		logger.Errorf("failed to read request body: %v", err)
-		ctx.Status(http.StatusBadRequest)
+func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
+	ctx := ctxWithRequestId(ginCtx)
+	body, ok := readRequestBody(ctx, ginCtx)
+	if !ok {
+		ginCtx.Status(http.StatusBadRequest)
 		return
 	}
 
-	eventName := ctx.Request.Header.Get("X-Gitverse-Event")
-	eventTypeName := ctx.Request.Header.Get("X-Gitverse-Event-Type")
-	event, err := parsers.ParseEvent(eventName, eventTypeName, body)
+	eventName := ginCtx.Request.Header.Get("X-Gitverse-Event")
+	eventTypeName := ginCtx.Request.Header.Get("X-Gitverse-Event-Type")
+	event, err := parsers.ParseEvent(ctx, eventName, eventTypeName, body)
 	if err != nil {
-		logger.Errorf("failed to parse gitverse event: %v", err)
-		logger.Errorf("headers=%v body=%s", ctx.Request.Header, string(body))
+		logger.Error(ctx, "failed to parse gitverse event", "err", err,
+			"headers", ginCtx.Request.Header, "body", string(body))
+		ginCtx.Status(http.StatusBadRequest)
+		return
 	}
 
-	ctx.Status(http.StatusOK)
+	ginCtx.Status(http.StatusOK)
 
-	go func(event events.Event) {
-		s.dispatcher.Dispatch(context.Background(), event)
-	}(event)
+	go func(ctx context.Context, event events.Event) {
+		s.dispatcher.Dispatch(ctx, event)
+	}(ctx, event)
+}
+
+func ctxWithRequestId(ginCtx *gin.Context) (ctx context.Context) {
+	ctx = context.WithoutCancel(ginCtx.Request.Context())
+	if delivery := ginCtx.GetHeader("X-Gitverse-Delivery"); delivery != "" {
+		ctx = logger.With(ctx, "request-id", delivery)
+	}
+
+	return
+}
+
+func readRequestBody(ctx context.Context, ginCtx *gin.Context) (body []byte, ok bool) {
+	body, err := io.ReadAll(ginCtx.Request.Body)
+	if err != nil {
+		logger.Error(ctx, "failed to read request body", "err", err)
+		return
+	}
+
+	return body, true
 }

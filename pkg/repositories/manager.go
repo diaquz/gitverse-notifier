@@ -60,11 +60,11 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 		name := entry.Name()
 
 		if entry.IsDir() {
-			logger.Debugf("[RepositoriesSetup] directory %s skipped", name)
+			logger.Debug(nil, "directory skipped", "action", "repositories_setup", "name", name)
 			continue
 		}
 		if !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") {
-			logger.Debugf("[RepositoriesSetup] file %s skipped", name)
+			logger.Debug(nil, "config file skipped", "action", "repositories_setup", "name", name)
 			continue
 		}
 
@@ -77,12 +77,19 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 		if settings.Repository == DefaultRepository {
 			manager.defaultSetting = *settings
 			defaultSettingsInitialized = true
-			logger.Debugf("[RepositoriesSetup] loaded default repository %s, actions: %s", name, manager.defaultSetting.RenderActionsCodes())
+			logger.Debug(nil, "loaded default repository",
+				"action", "repositories_setup",
+				"name", name,
+				"actions", manager.defaultSetting.RenderActionsCodes())
 			continue
 		}
 
 		manager.mapping[settings.Repository] = settings
-		logger.Debugf("[RepositoriesSetup] loaded settings (%s) for repository %s, actions: %s", name, settings.Repository, settings.RenderActionsCodes())
+		logger.Debug(nil, "[RepositoriesSetup] loaded settings (%s) for repository %s, actions: %s", 
+			"action", "repositories_setup",
+			"name", name,
+			"repository", settings.Repository,
+			"actions", manager.defaultSetting.RenderActionsCodes())
 	}
 
 	if !defaultSettingsInitialized {

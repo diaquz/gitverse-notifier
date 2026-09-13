@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"gitverse-notifier/pkg/events"
 	"strings"
 )
@@ -44,7 +45,8 @@ func (s *RepositorySettings) ActionsByEvent(event events.Event) []events.ActionR
 func (s *RepositorySettings) RenderActionsCodes() string {
 	codes := make([]string, 0, len(s.Actions))
 	for _, action := range s.Actions {
-		codes = append(codes, action.Action)
+		codes = append(codes,
+			fmt.Sprintf("%s: %s", action.On, action.Action))
 	}
 
 	return strings.Join(codes, ", ")

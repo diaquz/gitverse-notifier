@@ -25,32 +25,29 @@ func NewDispatcher(manager *repositories.RepositoriesManager, handlers ...Action
 }
 
 func (d *Dispatcher) Dispatch(ctx context.Context, event events.Event) {
-	if event.Type == events.Unknown {
-		logger.Warnf("[EventDispath] skip unknown event for repository=%s", event.Repository)
-		return
-	}
-
 	rules := d.manager.ActionsFor(event.Repository, event)
 	if len(rules) == 0 {
-		logger.Debugf("[EventDispath] no actions for event=%s repository=%s", event.Type, event.Repository)
+		logger.Info(ctx, "no actions for event", "event", event.Type, "repository", event.Repository)
 		return
 	}
 
 	for _, rule := range rules {
 		handler, ok := d.handlers[rule.Action]
 		if !ok {
-			logger.Errorf("no handler registered for action %q event=%s repository=%s", rule.Action, event.Type, event.Repository)
+			logger.Error(ctx, "no handlers registered for action",
+				"action", rule.Action, "event", event.Type, "repository", event.Repository)
 			continue
 		}
 
-		logger.Debugf("[EventDispather] processing %s action for %s", handler.Name(), event.Type)
+		logger.Info(ctx, "processing action for event", "action", handler.Name(), "event", event.Type)
 		if !handler.Ready() {
-			logger.Warnf("handler for action %s in not configured, skip", rule.Action)
+			logger.Warn(ctx, "handler is not configured, skipping", "action", rule.Action)
 			continue
 		}
 
 		if err := handler.Run(ctx, event, &rule); err != nil {
-			logger.Errorf("action %s failed for event=%s repository=%s: %v", rule.Action, event.Type, event.Repository, err)
+			logger.Error(ctx, "action failed",
+				"action", rule.Action, "event", event.Type, "repository", event.Repository, "err", err)
 		}
 	}
 }

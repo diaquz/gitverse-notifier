@@ -146,7 +146,7 @@ func SetupTemplateEngine() (*Engine, error) {
 			return nil, fmt.Errorf("failed to parse template %s: %w", path, err)
 		}
 
-		logger.Debugf("[TemplatesEngine] add new template %s for %s", name, path)
+		logger.Debug(nil, "template registered", "action", "templates_setup", "template", name, "path", path)
 	}
 
 	return &Engine{engine: root}, nil
