@@ -54,7 +54,7 @@ url: ""
 allowed_jira_projects:
   - JIRA
   - TEST
-actions:
+action_rules:
   - on: pull_request.opened # Код события
     action: jira.comment_issue # Код действия
     template: jira/pr_opened # Название шаблона

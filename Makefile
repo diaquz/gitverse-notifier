@@ -19,9 +19,13 @@ NOTIFIERLDFLAGS+=-X 'main.Version=$(VERSION)'
 NOTIFIERBUILD=CGO_ENABLED=0 go build -trimpath -ldflags "$(NOTIFIERLDFLAGS) ${LDFLAGS}"
 
 init_configs:
-	for file in *.yml.example; do \
+	for file in ./*.yml.example; do \
 		cp "$$file" "$$(basename "$$file" .example)"; \
 	done
+
+rebuild:
+	make clean || true
+	make build
 
 build:
 	echo "GOARCH=$(GOARCH) GOOS=$(GOOS) $(NOTIFIERBUILD) -o $(BUILDDIR)/$(NAME) ."
@@ -34,4 +38,4 @@ clean:
 	-rm -rf $(BUILDDIR)
 
 run:
-	go run ./gitverse_notifier
+	go run ./gitverse_notifier -f config.yml

@@ -77,11 +77,12 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 		if settings.Repository == DefaultRepository {
 			manager.defaultSetting = *settings
 			defaultSettingsInitialized = true
-			logger.Debugf("[RepositoriesSetup] loaded default repository settings (%s)", name)
+			logger.Debugf("[RepositoriesSetup] loaded default repository %s, actions: %s", name, manager.defaultSetting.RenderActionsCodes())
+			continue
 		}
 
 		manager.mapping[settings.Repository] = settings
-		logger.Debugf("[RepositoriesSetup] loaded settings (%s) for repository %s", name, settings.Repository)
+		logger.Debugf("[RepositoriesSetup] loaded settings (%s) for repository %s, actions: %s", name, settings.Repository, settings.RenderActionsCodes())
 	}
 
 	if !defaultSettingsInitialized {

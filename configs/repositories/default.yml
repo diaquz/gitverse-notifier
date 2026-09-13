@@ -9,7 +9,7 @@ url: ""
 allowed_jira_projects:
   - JIRA
   - TEST
-actions:
+action_rules:
   - on: pull_request.opened
     action: jira.comment_issue
     template: jira/pr_opened
