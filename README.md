@@ -33,12 +33,14 @@ docker compose up -d
 | `HTTPD_PORT` | Порт | `9001` |
 | `LOG_LEVEL` | Уровень логирования | `INFO` |
 | `LOG_FILE_NAME` | Имя файла с логами | `gitverse-notifier.log` |
+| `LOG_MAX_SIZE` | Максимальный размер файла с логами (МБ) | 15 |
+| `LOG_MAX_AGE` | Максимальный возвраст логов (дней)  | 7 |
 | `JIRA_URL` | URL для Jira | — |
 | `JIRA_TOKEN` | Токен для Jira | — |
 | `JIRA_USERNAME` / `JIRA_PASSWORD` | Логин и пароль для джиры - альтернатива токену | — |
-| `TELEGRAM_BOT_TOKEN` | Токен Telegram-бота | — |
-| `TELEGRAM_CHAT_ID` | ID чата или канала для уведомлений | — |
-| `TELEGRAM_PROXY_URL` | Опциональный HTTP прокси для Telegram | — |
+| `TELEGRAM_BOT_TOKEN` | Токен Telegram-бота (опционально) | — |
+| `TELEGRAM_CHAT_ID` | ID чата или канала для уведомлений (опционально) | — |
+| `TELEGRAM_PROXY_URL` | HTTP прокси для Telegram (опционально) | — |
 | `GITVERSE_BASE_URL` | Ссылка на гитверс для использования в уведомлениях | — |
 
 
@@ -129,7 +131,6 @@ action_rules:
 
 ## В планах
 
-- Расширить логирование
 - Добавить фильтрацию по результату для cicd.status
 - Написать тесты
 - добавить интеграцию с gitverse

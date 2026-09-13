@@ -31,7 +31,6 @@ type Config struct {
 	LogLevel    string `mapstructure:"LOG_LEVEL"`
 	LogFileName string `mapstructure:"LOG_FILE_NAME"`
 
-	SecretEncryptKey string `mapstructure:"SECRET_ENCRYPT_KEY"`
 	LanguageCode     string `mapstructure:"LANGUAGE_CODE"`
 
 	JiraURL string `mapstructure:"JIRA_URL"`
@@ -75,7 +74,7 @@ func getDefaultConfig() Config {
 	return Config{
 		Root:                rootPath,
 		LogDirPath:          logDirPath,
-		LogMaxSize:          5,
+		LogMaxSize:          15,
 		LogMaxAge:           7,
 		ConfigsDirPath:      configPath,
 		TemplatesDirPath:    templatesPath,
