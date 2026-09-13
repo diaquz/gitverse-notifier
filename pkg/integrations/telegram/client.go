@@ -18,8 +18,10 @@ import (
 var ErrNotConfigured = errors.New("telegram is not configured")
 
 type Client struct {
-	bot    *bot.Bot
-	chatID string
+	bot       *bot.Bot
+	chatID    string
+	threadID  int
+	parseMode models.ParseMode
 }
 
 func NewTelegramClient() (*Client, error) {
@@ -42,8 +44,11 @@ func NewTelegramClient() (*Client, error) {
 	}
 
 	return &Client{
-		bot:    tgBot,
-		chatID: chatID,
+		bot:      tgBot,
+		chatID:   chatID,
+		threadID: cfg.TelegramThreadId,
+		// TODO: Неправильный тип вернет ошибки при отправке, но я чет не хочу писать отдельную валидацию, будет на совести пользователя
+		parseMode: models.ParseMode(cfg.TelegramParseMode),
 	}, nil
 }
 
@@ -59,7 +64,7 @@ func botOptions(proxyURL string) ([]bot.Option, error) {
 	}
 
 	httpClient := &http.Client{
-		Timeout: 30*time.Second,
+		Timeout: 30 * time.Second,
 		Transport: &http.Transport{
 			Proxy: http.ProxyURL(parsed),
 		},
@@ -72,9 +77,10 @@ func botOptions(proxyURL string) ([]bot.Option, error) {
 
 func (c *Client) SendMessage(ctx context.Context, text string) error {
 	if _, err := c.bot.SendMessage(ctx, &bot.SendMessageParams{
-		ChatID:    c.chatID,
-		Text:      text,
-		ParseMode: models.ParseModeMarkdownV1,
+		ChatID:          c.chatID,
+		MessageThreadID: c.threadID,
+		Text:            text,
+		ParseMode:       c.parseMode,
 	}); err != nil {
 		return fmt.Errorf("failed to send telegram message to %s: %w", c.chatID, err)
 	}

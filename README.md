@@ -35,12 +35,15 @@ docker compose up -d
 | `LOG_FILE_NAME` | Имя файла с логами | `gitverse-notifier.log` |
 | `LOG_MAX_SIZE` | Максимальный размер файла с логами (МБ) | 15 |
 | `LOG_MAX_AGE` | Максимальный возвраст логов (дней)  | 7 |
+| `LOG_FORMAT_JSON` | Форматировать ли логи в JSON  | false |
 | `JIRA_URL` | URL для Jira | — |
 | `JIRA_TOKEN` | Токен для Jira | — |
 | `JIRA_USERNAME` / `JIRA_PASSWORD` | Логин и пароль для джиры - альтернатива токену | — |
 | `TELEGRAM_BOT_TOKEN` | Токен Telegram-бота (опционально) | — |
 | `TELEGRAM_CHAT_ID` | ID чата или канала для уведомлений (опционально) | — |
+| `TELEGRAM_THREAD_ID` | ID треда в чате | — |
 | `TELEGRAM_PROXY_URL` | HTTP прокси для Telegram (опционально) | — |
+| `TELEGRAM_PARSE_MODE` | Режим парсинга сообщения `Markdown` / `MarkdownV2` / `HTML` | — |
 | `GITVERSE_BASE_URL` | Ссылка на гитверс для использования в уведомлениях | — |
 
 

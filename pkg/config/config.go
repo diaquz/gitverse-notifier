@@ -14,9 +14,10 @@ var GlobalConfig *Config
 type Config struct {
 	Root string
 
-	LogDirPath string `mapstructure:"LOG_DIR_PATH"`
-	LogMaxSize int    `mapstructure:"LOG_MAX_SIZE"`
-	LogMaxAge  int    `mapstructure:"LOG_MAX_AGE"`
+	LogDirPath    string `mapstructure:"LOG_DIR_PATH"`
+	LogMaxSize    int    `mapstructure:"LOG_MAX_SIZE"`
+	LogMaxAge     int    `mapstructure:"LOG_MAX_AGE"`
+	LogFormatJson bool   `mapstructure:"LOG_FORMAT_JSON"`
 
 	ConfigsDirPath      string `mapstructure:"CONFIGS_DIR_PATH"`
 	TemplatesDirPath    string `mapstructure:"TEMPLATES_DIR_PATH"`
@@ -31,7 +32,7 @@ type Config struct {
 	LogLevel    string `mapstructure:"LOG_LEVEL"`
 	LogFileName string `mapstructure:"LOG_FILE_NAME"`
 
-	LanguageCode     string `mapstructure:"LANGUAGE_CODE"`
+	LanguageCode string `mapstructure:"LANGUAGE_CODE"`
 
 	JiraURL string `mapstructure:"JIRA_URL"`
 
@@ -39,9 +40,11 @@ type Config struct {
 	JiraPassword string `mapstructure:"JIRA_PASSWORD"`
 	JiraToken    string `mapstructure:"JIRA_TOKEN"`
 
-	TelegramBotToken string `mapstructure:"TELEGRAM_BOT_TOKEN"`
-	TelegramChatID   string `mapstructure:"TELEGRAM_CHAT_ID"`
-	TelegramProxyURL string `mapstructure:"TELEGRAM_PROXY_URL"`
+	TelegramBotToken  string `mapstructure:"TELEGRAM_BOT_TOKEN"`
+	TelegramChatID    string `mapstructure:"TELEGRAM_CHAT_ID"`
+	TelegramThreadId  int    `mapstructure:"TELEGRAM_THREAD_ID"`
+	TelegramProxyURL  string `mapstructure:"TELEGRAM_PROXY_URL"`
+	TelegramParseMode string `mapstructure:"TELEGRAM_PARSE_MODE"`
 
 	GitverseBaseURL string `mapstructure:"GITVERSE_BASE_URL"`
 }
@@ -85,6 +88,7 @@ func getDefaultConfig() Config {
 		LogFileName:         "gitverse-notifier.log",
 		LanguageCode:        "ru",
 		TemplatesPattern:    "**/*.tmpl",
+		TelegramParseMode:   "Markdown",
 	}
 }
 

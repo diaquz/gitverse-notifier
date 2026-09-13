@@ -77,7 +77,7 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 		if settings.Repository == DefaultRepository {
 			manager.defaultSetting = *settings
 			defaultSettingsInitialized = true
-			logger.Debug(nil, "loaded default repository",
+			logger.Debug(nil, "loaded default repository settings",
 				"action", "repositories_setup",
 				"name", name,
 				"actions", manager.defaultSetting.RenderActionsCodes())
@@ -85,7 +85,7 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 		}
 
 		manager.mapping[settings.Repository] = settings
-		logger.Debug(nil, "[RepositoriesSetup] loaded settings (%s) for repository %s, actions: %s", 
+		logger.Debug(nil, "loaded repository settings", 
 			"action", "repositories_setup",
 			"name", name,
 			"repository", settings.Repository,

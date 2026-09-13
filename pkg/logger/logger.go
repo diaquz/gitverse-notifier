@@ -37,8 +37,14 @@ func SetupLogger(conf *config.Config) {
 	}
 
 	writer := io.MultiWriter(fileWriter, os.Stdout)
-	handler := slog.NewTextHandler(writer, loggerHandlerOptions(conf))
-	defaultLogger = slog.New(handler)
+	if conf.LogFormatJson {
+		handler := slog.NewJSONHandler(writer, loggerHandlerOptions(conf))
+		defaultLogger = slog.New(handler)
+	} else {
+		handler := slog.NewTextHandler(writer, loggerHandlerOptions(conf))
+		defaultLogger = slog.New(handler)
+	}
+
 	slog.SetDefault(defaultLogger)
 }
 
