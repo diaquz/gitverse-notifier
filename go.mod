@@ -5,8 +5,10 @@ go 1.27
 require (
 	github.com/andygrunwald/go-jira v1.16.1
 	github.com/gin-gonic/gin v1.12.0
+	github.com/go-telegram/bot v1.27.0
 	github.com/spf13/viper v1.21.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -53,5 +55,4 @@ require (
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

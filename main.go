@@ -9,6 +9,7 @@ import (
 	"gitverse-notifier/pkg/events/enrichers"
 	"gitverse-notifier/pkg/events/parsers"
 	"gitverse-notifier/pkg/integrations/jira"
+	"gitverse-notifier/pkg/integrations/telegram"
 	"gitverse-notifier/pkg/logger"
 	"gitverse-notifier/pkg/repositories"
 	"gitverse-notifier/pkg/server"
@@ -55,10 +56,15 @@ func main() {
 		logger.Fatal(jiraErr)
 	}
 
+	tgClient, tgErr := telegram.NewTelegramClient()
+	if tgErr != nil {
+		logger.Fatal(tgErr)
+	}
+
 	dispatcher := events.NewDispatcher(
 		manager,
 		actions.NewJiraCommentIssue(jiraClient, engine),
-		actions.NewTelegramNotify(engine),
+		actions.NewTelegramNotify(tgClient, engine),
 	)
 
 	srv := server.NewHttpServer(dispatcher)

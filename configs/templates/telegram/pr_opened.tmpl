@@ -1,5 +1,3 @@
-{{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} Открыт PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}
-{{tgLink .PullRequest.Author.Name .PullRequest.Author.URL}}
-{{- if .PullRequest.URL}}
-{{.PullRequest.URL}}
-{{- end}}
+[{{tgLink .Repository .RepositoryURL}}] Открыт PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}
+Автор {{tgLink .PullRequest.Author.Name .PullRequest.Author.URL}}
+{{if .IssueKeys}} Задачи [{{join .IssueKeys ", "}}]{{end}} 

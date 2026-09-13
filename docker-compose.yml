@@ -8,11 +8,10 @@ services:
     image: gitverse-notifier:${VERSION:-latest}
     container_name: gitverse-notifier
     ports:
-      - "${HTTPD_PORT:-9001}:9001"
+      - "${HTTPD_PORT:-9001}:80"
     volumes:
       - ./config.yml:/opt/gitverse_notifier/config.yml:ro
-      - ./actions:/opt/gitverse_notifier/actions:ro
-      - ./templates:/opt/gitverse_notifier/templates:ro
+      - ./configs:/opt/gitverse_notifier/configs:ro
       - ./data:/opt/gitverse_notifier/data
     command: ["./gitverse_notifier", "-f", "/opt/gitverse_notifier/config.yml"]
     restart: unless-stopped

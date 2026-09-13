@@ -38,6 +38,10 @@ type Config struct {
 	JiraPassword string `mapstructure:"JIRA_PASSWORD"`
 	JiraToken    string `mapstructure:"JIRA_TOKEN"`
 
+	TelegramBotToken string `mapstructure:"TELEGRAM_BOT_TOKEN"`
+	TelegramChatID   string `mapstructure:"TELEGRAM_CHAT_ID"`
+	TelegramProxyURL string `mapstructure:"TELEGRAM_PROXY_URL"`
+
 	GitverseBaseURL string `mapstructure:"GITVERSE_BASE_URL"`
 }
 

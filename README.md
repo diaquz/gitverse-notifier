@@ -1,6 +1,6 @@
 # gitverse-notifier
 
-Сервис для обработки вебхуков gitverse, создан из говна и палок для личных нужд и от безделья.
+Сервис для обработки вебхуков gitverse, создан для личных нужд и от безделья, частично навайбкожен с cursor.
 
 ## Запуск
 
@@ -17,6 +17,7 @@ make build
 
 ```bash
 make docker
+docker compose up -d{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}}
 ```
 
 ## Конфигурация
@@ -33,6 +34,9 @@ make docker
 | `JIRA_URL` | URL для Jira | — |
 | `JIRA_TOKEN` | Токен для Jira | — |
 | `JIRA_USERNAME` / `JIRA_PASSWORD` | Логин и пароль для джиры - альтернатива токену | — |
+| `TELEGRAM_BOT_TOKEN` | Токен Telegram-бота | — |
+| `TELEGRAM_CHAT_ID` | ID чата или канала для уведомлений | — |
+| `TELEGRAM_PROXY_URL` | Опциональный HTTP/HTTPS прокси для Telegram API (`http://host:port`) | — |
 | `GITVERSE_BASE_URL` | Ссылка на гитверс для использования в уведомлениях | — |
 
 
@@ -99,7 +103,7 @@ actions:
 | Действие | Описание |
 |---|---|
 | `jira.comment_issue` | Создает комментарий для задачи в Jira |
-| `telegram.notify` | Пока заглушка |
+| `telegram.notify` | Отправляет уведомление в Telegram |
 
 
 ## Шаблоны
@@ -128,8 +132,6 @@ actions:
 
 ## В планах
 
-- Отправка уведомлений в тг
 - Расширить логирование
 - Добавить фильтрацию по результату для cicd.status
-- добавить обратку skip_empty
 - добавить интеграцию с gitverse (обновление заголовка PR для указания ссылки на задачу)

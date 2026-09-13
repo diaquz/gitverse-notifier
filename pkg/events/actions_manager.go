@@ -31,14 +31,18 @@ func (s *ActionSettings) ActionsByEvent(event Event) []ActionRule {
 		if rule.Branch != "" && event.Branch != rule.Branch {
 			continue
 		}
+		if rule.SkipEmpty && event.Comment.Body == "" {
+			continue
+		}
+		// TODO: Фильтрация по статусу CICD
+
 		actions = append(actions, rule)
 	}
 	return actions
 }
 
 func (s *ActionSettings) RenderActionsCodes() string {
-
-	codes := make([]string, len(s.Actions))
+	codes := make([]string, 0, len(s.Actions))
 	for _, action := range s.Actions {
 		codes = append(codes, action.Action)
 	}
