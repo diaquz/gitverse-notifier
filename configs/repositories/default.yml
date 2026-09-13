@@ -6,7 +6,9 @@ url: ""
 
 # Разрешённые коды проектов Jira
 # Пустой список — без ограничений.
-allowed_jira_projects: []
+allowed_jira_projects:
+  - JIRA
+  - TEST
 actions:
   - on: pull_request.opened
     action: jira.comment_issue

@@ -8,16 +8,18 @@
 
 ```bash
 make init_configs
-# нужно указать переменные в config.yml JIRA_TOKEN, GITVERSE_BASE_URL и тд
-make build
+# нужно указать переменные в config.yml JIRA_TOKEN и тд
+make clean & make build
 ./build/gitverse_notifier -f config.yml
 ```
 
 ### Docker
 
 ```bash
+make init_configs
+# нужно указать переменные в config.yml JIRA_TOKEN и тд
 make docker
-docker compose up -d{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}}
+docker compose up -d
 ```
 
 ## Конфигурация
@@ -36,7 +38,7 @@ docker compose up -d{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}}
 | `JIRA_USERNAME` / `JIRA_PASSWORD` | Логин и пароль для джиры - альтернатива токену | — |
 | `TELEGRAM_BOT_TOKEN` | Токен Telegram-бота | — |
 | `TELEGRAM_CHAT_ID` | ID чата или канала для уведомлений | — |
-| `TELEGRAM_PROXY_URL` | Опциональный HTTP/HTTPS прокси для Telegram API (`http://host:port`) | — |
+| `TELEGRAM_PROXY_URL` | Опциональный HTTP прокси для Telegram | — |
 | `GITVERSE_BASE_URL` | Ссылка на гитверс для использования в уведомлениях | — |
 
 
@@ -49,17 +51,9 @@ repository: any
 # Базовый URL gitverse для ссылок
 url: ""
 # Коды проектов Jira
-allowed_jira_projects: []
-```
-
-## Конфигурация правил уведомления
-
-Файлы с правилами уведомлений лежат в `configs/actions/*.yml`, для примера есть `configs/actions/default.yml`. В них указывается имя репозитория (any для всех) и список правил.
-Например:
-
-```yaml
-repository: any
-
+allowed_jira_projects:
+  - JIRA
+  - TEST
 actions:
   - on: pull_request.opened # Код события
     action: jira.comment_issue # Код действия
@@ -128,10 +122,11 @@ actions:
 
 - Из залоговка PR - берутся похожие на номера строки из начала, например  `JIRA-1 Fix` или `JIRA-1 JIRA-2 Fix`
 - Из имени ветки (branch или ref)
-- Ключи фильтруются по `allowed_jira_projects` из настроек репозитория
+- Задачи фильтруются по проектам, указанным в `allowed_jira_projects` из настроек репозитория
 
 ## В планах
 
 - Расширить логирование
 - Добавить фильтрацию по результату для cicd.status
-- добавить интеграцию с gitverse (обновление заголовка PR для указания ссылки на задачу)
+- Написать тесты
+- добавить интеграцию с gitverse
