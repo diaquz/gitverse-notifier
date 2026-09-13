@@ -60,6 +60,7 @@ func main() {
 		manager,
 		handlers.NewJiraCommentIssue(jiraClient, engine),
 		handlers.NewTelegramNotify(tgClient, engine),
+		handlers.NewUtilsLog(),
 	)
 
 	srv := server.NewHttpServer(dispatcher)

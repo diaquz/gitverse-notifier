@@ -32,7 +32,7 @@ func (s *RepositorySettings) IsJiraCodeAllowed(code string) bool {
 func (s *RepositorySettings) ActionsByEvent(event events.Event) []events.ActionRule {
 	actions := make([]events.ActionRule, 0)
 	for _, rule := range s.Actions {
-		if rule.Allowed(&event) {
+		if !rule.Allowed(&event) {
 			continue
 		}
 

@@ -18,6 +18,15 @@ action_rules:
     action: telegram.notify
     template: telegram/pr_opened
 
+  - on: pull_request.edited
+    action: utils.log
+
+  - on: pull_request.closed
+    action: utils.log
+
+  - on: pull_request.synchronized
+    action: utils.log
+
   - on: pull_request.review_requested
     action: telegram.notify
     template: telegram/review_requested
@@ -25,6 +34,12 @@ action_rules:
   - on: pull_request.review_approved
     action: telegram.notify
     template: telegram/review_approved
+
+  - on: pull_request.review_rejected
+    action: utils.log
+
+  - on: pull_request.review_comment
+    action: utils.log
 
   - on: pull_request.comment
     action: telegram.notify
@@ -43,3 +58,9 @@ action_rules:
   - on: branch.created
     action: telegram.notify
     template: telegram/branch_created
+
+  - on: branch.deleted
+    action: utils.log
+
+  - on: cicd.status
+    action: utils.log

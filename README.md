@@ -98,6 +98,7 @@ action_rules:
 |---|---|
 | `jira.comment_issue` | Создает комментарий для задачи в Jira |
 | `telegram.notify` | Отправляет уведомление в Telegram |
+| `utils.log` | Пишет событие в лог (для отладки) |
 
 
 ## Шаблоны
