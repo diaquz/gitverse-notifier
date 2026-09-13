@@ -7,10 +7,15 @@ on:
         description: 'Тег образа'
         required: true
         type: string
+      push_latest:
+        description: 'Обновить ли тег latest'
+        required: false
+        type: boolean
+        default: false
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: gitverse-notifier
 
 jobs:
   build-and-push:
