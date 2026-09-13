@@ -18,7 +18,6 @@ type Config struct {
 	ConfigsDirPath      string `mapstructure:"CONFIGS_DIR_PATH"`
 	TemplatesDirPath    string `mapstructure:"TEMPLATES_DIR_PATH"`
 	TemplatesPattern    string `mapstructure:"TEMPLATES_PATTERN"`
-	ActionsDirPath      string `mapstructure:"ACTIONS_DIR_PATH"`
 	RepositoriesDirPath string `mapstructure:"REPOSITORIES_DIR_PATH"`
 
 	BasicAuthUser     string `mapstructure:"BASIC_AUTH_USER"`
@@ -60,11 +59,10 @@ func getDefaultConfig() Config {
 	logDirPath := filepath.Join(dataFolderPath, "logs")
 
 	configPath := filepath.Join(rootPath, "configs")
-	actionsPath := filepath.Join(configPath, "actions")
 	templatesPath := filepath.Join(configPath, "templates")
 	repositoriesPath := filepath.Join(configPath, "repositories")
 
-	folders := []string{dataFolderPath, logDirPath, configPath, actionsPath, templatesPath, repositoriesPath}
+	folders := []string{dataFolderPath, logDirPath, configPath, templatesPath, repositoriesPath}
 	for i := range folders {
 		if err := EnsureDirExist(folders[i]); err != nil {
 			log.Fatalf("Create folder failed: %s", err.Error())
@@ -75,7 +73,6 @@ func getDefaultConfig() Config {
 		Root:                rootPath,
 		LogDirPath:          logDirPath,
 		ConfigsDirPath:      configPath,
-		ActionsDirPath:      actionsPath,
 		TemplatesDirPath:    templatesPath,
 		RepositoriesDirPath: repositoriesPath,
 		BindHost:            "0.0.0.0",
