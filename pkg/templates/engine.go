@@ -53,11 +53,14 @@ type Engine struct {
 
 func funcMap() template.FuncMap {
 	return template.FuncMap{
-		"jiraEscape": JiraEscape,
-		"trim":       strings.TrimSpace,
-		"join":       strings.Join,
-		"jiraLink":   JiraLink,
-		"tgLink":     TelegramLink,
+		"jiraEscape":    JiraEscape,
+		"trim":          strings.TrimSpace,
+		"join":          strings.Join,
+		"jiraLink":      JiraLink,
+		"tgLink":        TelegramLink,
+		"issueURL":      IssueURL,
+		"tgIssueURLs":   TelegramIssueURLs,
+		"jiraIssueURLs": JiraIssueURLs,
 	}
 }
 
@@ -70,6 +73,33 @@ func JiraEscape(s string) string {
 		"|", "\\|",
 	)
 	return replacer.Replace(s)
+}
+
+func TelegramIssueURLs(keys []string) string {
+	return joinIssueURLs(keys, TelegramLink)
+}
+
+func JiraIssueURLs(keys []string) string {
+	return joinIssueURLs(keys, JiraLink)
+}
+
+func joinIssueURLs(keys []string, linkFn func(text, link string) string) string {
+	parts := make([]string, 0, len(keys))
+	for _, key := range keys {
+		if key == "" {
+			continue
+		}
+		parts = append(parts, linkFn(key, IssueURL(key)))
+	}
+	return strings.Join(parts, ", ")
+}
+
+func IssueURL(key string) string {
+	base := strings.TrimRight(config.GlobalConfig.JiraURL, "/")
+	if key == "" || base == "" {
+		return ""
+	}
+	return base + "/browse/" + key
 }
 
 func JiraLink(text, link string) string {
@@ -106,7 +136,7 @@ func SetupTemplateEngine() (*Engine, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read template %s: %w", path, err)
 		}
-	
+
 		// Учитываем, что шаблоны могут быть в каталогах и иметь одинаковые имена, например
 		// 	telegram/default.tmpl
 		// 	jira/default.tml

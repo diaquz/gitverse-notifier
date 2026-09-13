@@ -1,2 +1,1 @@
-{{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} {{tgLink .PullRequest.Title .PullRequest.URL}}
-{{tgLink .Comment.Author.Name .Comment.Author.URL}}: {{.Comment.Body}}
+[{{tgLink .Repository .RepositoryURL}}]{{if .IssueKeys}} [{{tgIssueURLs .IssueKeys}}]{{end}} {{tgLink .PullRequest.Title .PullRequest.URL}}

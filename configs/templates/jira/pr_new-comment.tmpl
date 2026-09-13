@@ -1,2 +1,2 @@
-{{jiraLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} {{.PullRequest.Title}}
-{{jiraLink .Comment.Author.Name .Comment.Author.URL}}: {{.Comment.Body}}
+{{jiraLink .Comment.Author.Name .Comment.Author.URL}} оставил комментарий к PR {{.PullRequest.Title}} в {{jiraLink .Repository .RepositoryURL}} 
+{{.Comment.Body}}

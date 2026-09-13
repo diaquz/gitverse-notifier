@@ -38,4 +38,4 @@ clean:
 	-rm -rf $(BUILDDIR)
 
 run:
-	go run ./gitverse_notifier -f config.yml
+	./$(BUILDDIR)/$(NAME) -f config.yml

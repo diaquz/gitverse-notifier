@@ -1,5 +1,1 @@
-{{tgLink .Repository .RepositoryURL}} Push в {{tgLink .Branch .BranchURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}}
-{{tgLink .Sender.Name .Sender.URL}} · commits: {{.Push.TotalCommits}}
-{{- if .BranchURL}}
-{{.BranchURL}}
-{{- end}}
+[{{tgLink .Repository .RepositoryURL}}] {{if .IssueKeys}}[{{tgIssueURLs .IssueKeys}}] {{end}}{{tgLink .Sender.Name .Sender.URL}} запушил изменения в ветку {{tgLink .Branch .BranchURL}}

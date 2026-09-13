@@ -109,6 +109,8 @@ action_rules:
 
 Имена шаблонов можно указываться в action->template.
 
+Доступные хелперы: `tgLink`, `jiraLink`, `IssueURL`, `tgIssueURLs`, `jiraIssueURLs`, `join`, `trim`, `jiraEscape`.
+
 Пример шаблона
 
 ```

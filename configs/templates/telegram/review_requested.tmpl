@@ -1,5 +1,1 @@
-{{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} Запрошена проверка PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}
-от {{tgLink .Sender.Name .Sender.URL}}
-{{- if .PullRequest.URL}}
-{{.PullRequest.URL}}
-{{- end}}
+{{tgLink .Repository .RepositoryURL}}]{{if .IssueKeys}} [{{tgIssueURLs .IssueKeys}}]{{end}} Запрошена проверка PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}}: {{tgLink .PullRequest.Title .PullRequest.URL}}

@@ -1,5 +1,1 @@
-{{tgLink .Repository .RepositoryURL}}{{if .IssueKeys}} [{{join .IssueKeys ", "}}]{{end}} PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}} одобрен: {{tgLink .PullRequest.Title .PullRequest.URL}}
-{{tgLink .Sender.Name .Sender.URL}}
-{{- if .PullRequest.URL}}
-{{.PullRequest.URL}}
-{{- end}}
+[{{tgLink .Repository .RepositoryURL}}]{{if .IssueKeys}} [{{tgIssueURLs .IssueKeys}}]{{end}} PR{{if .PullRequest.Number}} #{{.PullRequest.Number}}{{end}} одобрен: {{tgLink .PullRequest.Title .PullRequest.URL}} пользователем {{tgLink .Sender.Name .Sender.URL}}
