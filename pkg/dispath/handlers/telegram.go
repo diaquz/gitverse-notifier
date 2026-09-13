@@ -44,7 +44,7 @@ func (a *TelegramNotify) Run(ctx context.Context, event events.Event, rule *even
 	logger.Debug(ctx, "rendered telegram message body", "action", a.Name(), "body", body)
 
 	if err := a.client.SendMessage(ctx, body); err != nil {
-		return fmt.Errorf("failed to send telegram notification: %w", err)
+		return err 
 	}
 
 	logger.Info(ctx, "successfully sent telegram notification",

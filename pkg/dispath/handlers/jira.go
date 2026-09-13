@@ -54,7 +54,7 @@ func (a *JiraCommentIssue) Run(ctx context.Context, event events.Event, rule *ev
 
 	for _, key := range event.IssueKeys {
 		if _, err := a.client.AddComment(key, body); err != nil {
-			return fmt.Errorf("failed to comment on issue %s: %w", key, err)
+			return err 
 		}
 
 		logger.Info(ctx, "successfully commented on issue",
