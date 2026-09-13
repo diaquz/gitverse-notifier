@@ -64,8 +64,9 @@ func getDefaultConfig() Config {
 	logDirPath := filepath.Join(dataFolderPath, "logs")
 
 	configPath := filepath.Join(rootPath, "configs")
-	templatesPath := filepath.Join(configPath, "templates")
 	repositoriesPath := filepath.Join(configPath, "repositories")
+
+	templatesPath := filepath.Join(rootPath, "templates")
 
 	folders := []string{dataFolderPath, logDirPath, configPath, templatesPath, repositoriesPath}
 	for i := range folders {

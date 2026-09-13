@@ -108,10 +108,10 @@ action_rules:
 
 ## Шаблоны
 
-Файлы внутри `configs/templates/**/*.tmpl` используются как go template.
+Файлы внутри `templates/**/*.tmpl` используются как go template.
 Регистрируются с именами вида:
-- `configs/templates/jira/pr_opened.tmpl` -> `jira/pr_opened`
-- `configs/templates/telegram/pr_comment.tmpl` -> `telegram/pr_comment`
+- `templates/jira/pr_opened.tmpl` -> `jira/pr_opened`
+- `templates/telegram/pr_comment.tmpl` -> `telegram/pr_comment`
 
 Имена шаблонов можно указываться в action->template.
 
