@@ -1,4 +1,4 @@
-name: PR
+name: workflow
 on:
   push:
     branches: [ "main" ]
