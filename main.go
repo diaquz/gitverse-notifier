@@ -53,7 +53,7 @@ func main() {
 
 	tgClient, tgErr := telegram.NewTelegramClient()
 	if tgErr != nil {
-		logger.Fatal(tgErr)
+		logger.Errorf("failed to configure telegram client: %w", tgErr)
 	}
 
 	dispatcher := dispath.NewDispatcher(

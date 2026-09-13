@@ -44,6 +44,11 @@ func (d *Dispatcher) Dispatch(ctx context.Context, event events.Event) {
 		}
 
 		logger.Debugf("[EventDispather] processing %s action for %s", handler.Name(), event.Type)
+		if !handler.Ready() {
+			logger.Warnf("handler for action %s in not configured, skip", rule.Action)
+			continue
+		}
+
 		if err := handler.Run(ctx, event, &rule); err != nil {
 			logger.Errorf("action %s failed for event=%s repository=%s: %v", rule.Action, event.Type, event.Repository, err)
 		}

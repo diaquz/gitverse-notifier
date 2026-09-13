@@ -14,16 +14,20 @@ import (
 const defaultTelegramTemplate = "telegram/default"
 
 type TelegramNotify struct {
-	Client    *telegram.Client
-	Templates *templates.Engine
+	client    *telegram.Client
+	templates *templates.Engine
 }
 
 func NewTelegramNotify(client *telegram.Client, engine *templates.Engine) *TelegramNotify {
-	return &TelegramNotify{Client: client, Templates: engine}
+	return &TelegramNotify{client: client, templates: engine}
 }
 
 func (a *TelegramNotify) Name() string {
 	return "telegram.notify"
+}
+
+func (a *TelegramNotify) Ready() bool {
+	return a.client != nil
 }
 
 func (a *TelegramNotify) Run(ctx context.Context, ev events.Event, rule *events.ActionRule) error {
@@ -32,13 +36,13 @@ func (a *TelegramNotify) Run(ctx context.Context, ev events.Event, rule *events.
 		name = defaultTelegramTemplate
 	}
 
-	body, err := a.Templates.Render(name, templates.DataFromEvent(ev))
+	body, err := a.templates.Render(name, templates.DataFromEvent(ev))
 	if err != nil {
 		return err
 	}
 	logger.Debugf("[Action=%s] rendered telegram message body:\n%s", a.Name(), body)
 
-	if err := a.Client.SendMessage(ctx, body); err != nil {
+	if err := a.client.SendMessage(ctx, body); err != nil {
 		return fmt.Errorf("failed to send telegram notification: %w", err)
 	}
 
