@@ -65,3 +65,5 @@ action_rules:
 
   - on: cicd.status
     action: utils.log
+    cicd_context: rspec
+    cicd_state: failure

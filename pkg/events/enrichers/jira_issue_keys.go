@@ -11,8 +11,7 @@ import (
 )
 
 var (
-	issueKeyRe        = regexp.MustCompile(`\b([A-Z][A-Z0-9]+-\d+)\b`)
-	leadingIssueKeyRe = regexp.MustCompile(`^([A-Z][A-Z0-9]+-\d+)\b`)
+	issueKeyRe = regexp.MustCompile(`\b([A-Z][A-Z0-9]+-\d+)\b`)
 )
 
 type JiraIssueKeys struct {
@@ -57,11 +56,15 @@ func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 		keys = append(keys, key)
 	}
 
-	for _, key := range leadingIssueKeys(event.PullRequest.Title) {
+	for _, key := range issueKeysInText(event.PullRequest.Title) {
 		add(key)
 	}
 
-	for _, key := range issueKeysInRef(event.Branch) {
+	for _, key := range issueKeysInText(event.PullRequest.Body) {
+		add(key)
+	}
+
+	for _, key := range issueKeysInText(event.Branch) {
 		add(key)
 	}
 
@@ -69,30 +72,12 @@ func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 	return nil
 }
 
-// leadingIssueKeys возвращает кода задач jira, содержащиеся в заголовке PR, например
-//
-//	JIRA-1 Заголовок
-//	JIRA-2 JIRA-3 Заголовок
-func leadingIssueKeys(title string) []string {
-	rest := strings.TrimSpace(title)
-	var out []string
-
-	for rest != "" {
-		m := leadingIssueKeyRe.FindStringSubmatch(rest)
-		if m == nil {
-			break
-		}
-
-		out = append(out, m[1])
-		rest = strings.TrimSpace(rest[len(m[0]):])
-	}
-	return out
-}
-
-// issueKeysInRef возвращает номера задач jira, которые содержатся в имени ветки, например
+// issueKeysInText возвращает номера задач jira, которые содержатся в тексте
 //
 //	JIRA-1
-func issueKeysInRef(text string) []string {
+//	JIRA-2 JIRA-3 Заголовок
+//	Слияние из ветки JIRA-1 в develop
+func issueKeysInText(text string) []string {
 	matches := issueKeyRe.FindAllString(text, -1)
 	if len(matches) == 0 {
 		return nil
