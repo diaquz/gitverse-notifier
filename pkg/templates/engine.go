@@ -54,6 +54,7 @@ type Engine struct {
 func funcMap() template.FuncMap {
 	return template.FuncMap{
 		"jiraEscape":    JiraEscape,
+		"tgEscape":      TelegramEscape,
 		"trim":          strings.TrimSpace,
 		"join":          strings.Join,
 		"jiraLink":      JiraLink,
@@ -73,6 +74,54 @@ func JiraEscape(s string) string {
 		"|", "\\|",
 	)
 	return replacer.Replace(s)
+}
+
+func TelegramEscape(s string) string {
+	s = normalizeLiteralNewlines(s)
+
+	switch config.GlobalConfig.TelegramParseMode {
+	case "HTML":
+		return strings.NewReplacer(
+			"&", "&amp;",
+			"<", "&lt;",
+			">", "&gt;",
+		).Replace(s)
+	case "MarkdownV2":
+		return strings.NewReplacer(
+			"\\", "\\\\",
+			"_", "\\_",
+			"*", "\\*",
+			"[", "\\[",
+			"]", "\\]",
+			"(", "\\(",
+			")", "\\)",
+			"~", "\\~",
+			"`", "\\`",
+			">", "\\>",
+			"#", "\\#",
+			"+", "\\+",
+			"-", "\\-",
+			"=", "\\=",
+			"|", "\\|",
+			"{", "\\{",
+			"}", "\\}",
+			".", "\\.",
+			"!", "\\!",
+		).Replace(s)
+	default: // MarkdownV1
+		return strings.NewReplacer(
+			"_", "\\_",
+			"*", "\\*",
+			"`", "\\`",
+			"[", "\\[",
+		).Replace(s)
+	}
+}
+
+func normalizeLiteralNewlines(s string) string {
+	s = strings.ReplaceAll(s, "\\\\n", "\n")
+	s = strings.ReplaceAll(s, "\\n", "\n")
+	return s
 }
 
 func TelegramIssueURLs(keys []string) string {
@@ -111,6 +160,7 @@ func JiraLink(text, link string) string {
 }
 
 func TelegramLink(text, link string) string {
+	text = TelegramEscape(text)
 	if link == "" {
 		return text
 	}

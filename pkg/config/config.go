@@ -15,9 +15,12 @@ type Config struct {
 	Root string
 
 	LogDirPath    string `mapstructure:"LOG_DIR_PATH"`
+	LogLevel      string `mapstructure:"LOG_LEVEL"`
+	LogFileName   string `mapstructure:"LOG_FILE_NAME"`
 	LogMaxSize    int    `mapstructure:"LOG_MAX_SIZE"`
 	LogMaxAge     int    `mapstructure:"LOG_MAX_AGE"`
 	LogFormatJson bool   `mapstructure:"LOG_FORMAT_JSON"`
+	LogRequests   bool   `mapstructure:"LOG_REQUESTS"`
 
 	ConfigsDirPath      string `mapstructure:"CONFIGS_DIR_PATH"`
 	TemplatesDirPath    string `mapstructure:"TEMPLATES_DIR_PATH"`
@@ -27,10 +30,8 @@ type Config struct {
 	BasicAuthUser     string `mapstructure:"BASIC_AUTH_USER"`
 	BasicAuthPassword string `mapstructure:"BASIC_AUTH_PASSWORD"`
 
-	BindHost    string `mapstructure:"BIND_HOST"`
-	HTTPPort    string `mapstructure:"HTTPD_PORT"`
-	LogLevel    string `mapstructure:"LOG_LEVEL"`
-	LogFileName string `mapstructure:"LOG_FILE_NAME"`
+	BindHost string `mapstructure:"BIND_HOST"`
+	HTTPPort string `mapstructure:"HTTPD_PORT"`
 
 	LanguageCode string `mapstructure:"LANGUAGE_CODE"`
 

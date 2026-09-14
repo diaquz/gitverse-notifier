@@ -16,17 +16,19 @@ import (
 )
 
 type HttpServer struct {
-	addr       string
-	dispatcher *dispath.Dispatcher
-	accounts   gin.Accounts
+	addr           string
+	dispatcher     *dispath.Dispatcher
+	accounts       gin.Accounts
+	logAllRequests bool
 }
 
 func NewHttpServer(dispatcher *dispath.Dispatcher) *HttpServer {
 	addr := net.JoinHostPort(config.GlobalConfig.BindHost, config.GlobalConfig.HTTPPort)
 
 	return &HttpServer{
-		addr:       addr,
-		dispatcher: dispatcher,
+		addr:           addr,
+		dispatcher:     dispatcher,
+		logAllRequests: config.GlobalConfig.LogRequests,
 		accounts: gin.Accounts{
 			config.GlobalConfig.BasicAuthUser: config.GlobalConfig.BasicAuthPassword,
 		},
@@ -83,6 +85,11 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 			"headers", ginCtx.Request.Header, "body", string(body))
 		ginCtx.Status(http.StatusBadRequest)
 		return
+	}
+
+	if s.logAllRequests {
+		logger.Info(ctx, "gitverse event received", "err",
+			"headers", ginCtx.Request.Header, "body", string(body))
 	}
 
 	ginCtx.Status(http.StatusOK)
