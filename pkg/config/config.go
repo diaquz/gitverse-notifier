@@ -90,7 +90,7 @@ func getDefaultConfig() Config {
 		LogFileName:         "gitverse-notifier.log",
 		LanguageCode:        "ru",
 		TemplatesPattern:    "**/*.tmpl",
-		TelegramParseMode:   "Markdown",
+		TelegramParseMode:   "MarkdownV2",
 	}
 }
 

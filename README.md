@@ -43,7 +43,7 @@ docker compose up -d
 | `TELEGRAM_CHAT_ID` | ID чата или канала для уведомлений (опционально) | — |
 | `TELEGRAM_THREAD_ID` | ID треда в чате | — |
 | `TELEGRAM_PROXY_URL` | HTTP прокси для Telegram (опционально) | — |
-| `TELEGRAM_PARSE_MODE` | Режим парсинга сообщения `Markdown` / `MarkdownV2` / `HTML` | — |
+| `TELEGRAM_PARSE_MODE` | Режим парсинга сообщения `Markdown` / `MarkdownV2` / `HTML` | `MarkdownV2` |
 | `GITVERSE_BASE_URL` | Ссылка на гитверс для использования в уведомлениях | — |
 
 

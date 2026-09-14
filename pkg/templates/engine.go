@@ -77,8 +77,6 @@ func JiraEscape(s string) string {
 }
 
 func TelegramEscape(s string) string {
-	s = normalizeLiteralNewlines(s)
-
 	switch config.GlobalConfig.TelegramParseMode {
 	case "HTML":
 		return strings.NewReplacer(
@@ -86,42 +84,40 @@ func TelegramEscape(s string) string {
 			"<", "&lt;",
 			">", "&gt;",
 		).Replace(s)
-	case "MarkdownV2":
-		return strings.NewReplacer(
-			"\\", "\\\\",
-			"_", "\\_",
-			"*", "\\*",
-			"[", "\\[",
-			"]", "\\]",
-			"(", "\\(",
-			")", "\\)",
-			"~", "\\~",
-			"`", "\\`",
-			">", "\\>",
-			"#", "\\#",
-			"+", "\\+",
-			"-", "\\-",
-			"=", "\\=",
-			"|", "\\|",
-			"{", "\\{",
-			"}", "\\}",
-			".", "\\.",
-			"!", "\\!",
-		).Replace(s)
-	default: // MarkdownV1
+	case "Markdown":
 		return strings.NewReplacer(
 			"_", "\\_",
 			"*", "\\*",
 			"`", "\\`",
 			"[", "\\[",
 		).Replace(s)
+	default: // MarkdownV2
+		return escapeMarkdownV2(s)
 	}
 }
 
-func normalizeLiteralNewlines(s string) string {
-	s = strings.ReplaceAll(s, "\\\\n", "\n")
-	s = strings.ReplaceAll(s, "\\n", "\n")
-	return s
+func escapeMarkdownV2(s string) string {
+	return strings.NewReplacer(
+		"\\", "\\\\",
+		"_", "\\_",
+		"*", "\\*",
+		"[", "\\[",
+		"]", "\\]",
+		"(", "\\(",
+		")", "\\)",
+		"~", "\\~",
+		"`", "\\`",
+		">", "\\>",
+		"#", "\\#",
+		"+", "\\+",
+		"-", "\\-",
+		"=", "\\=",
+		"|", "\\|",
+		"{", "\\{",
+		"}", "\\}",
+		".", "\\.",
+		"!", "\\!",
+	).Replace(s)
 }
 
 func TelegramIssueURLs(keys []string) string {
@@ -164,6 +160,7 @@ func TelegramLink(text, link string) string {
 	if link == "" {
 		return text
 	}
+
 	return fmt.Sprintf("[%s](%s)", text, link)
 }
 

@@ -88,7 +88,7 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 	}
 
 	if s.logAllRequests {
-		logger.Info(ctx, "gitverse event received", "err",
+		logger.Info(ctx, "gitverse event received",
 			"headers", ginCtx.Request.Header, "body", string(body))
 	}
 
