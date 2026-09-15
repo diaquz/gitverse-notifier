@@ -1,7 +1,6 @@
 package jira
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,11 +8,6 @@ import (
 	"gitverse-notifier/pkg/config"
 
 	gojira "github.com/andygrunwald/go-jira"
-)
-
-var (
-	ErrTaskNotFound = errors.New("jira task not found")
-	ErrNotConfigured = errors.New("jira is not configured")
 )
 
 type JiraClient struct {
@@ -24,7 +18,7 @@ type JiraClient struct {
 func NewJiraClient() (*JiraClient, error) {
 	url := config.GlobalConfig.JiraURL
 	if url == "" {
-		return nil, ErrNotConfigured
+		return nil, fmt.Errorf("JIRA_URL config required")
 	}
 
 	httpClient, err := authHTTPClient()
@@ -57,26 +51,8 @@ func authHTTPClient() (*http.Client, error) {
 		tp := gojira.PATAuthTransport{Token: cfg.JiraToken}
 		return tp.Client(), nil
 	default:
-		return nil, fmt.Errorf("%w: set JIRA_USERNAME + JIRA_PASSWORD or JIRA_TOKEN", ErrNotConfigured)
+		return nil, fmt.Errorf("JIRA_USERNAME + JIRA_PASSWORD or JIRA_TOKEN configs required")
 	}
-}
-
-func (j *JiraClient) FindTask(taskCode string) (*gojira.Issue, error) {
-	taskCode = strings.TrimSpace(taskCode)
-	if taskCode == "" {
-		return nil, fmt.Errorf("empty task code")
-	}
-
-	issue, resp, err := j.client.Issue.Get(taskCode, nil)
-	if err != nil {
-		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return nil, fmt.Errorf("%w: %s", ErrTaskNotFound, taskCode)
-		}
-
-		return nil, fmt.Errorf("failed to find jira issue %s: %w", taskCode, err)
-	}
-
-	return issue, nil
 }
 
 func (j *JiraClient) IssueURL(taskCode string) string {
@@ -87,7 +63,7 @@ func (j *JiraClient) AddComment(taskCode, body string) (*gojira.Comment, error) 
 	comment, resp, err := j.client.Issue.AddComment(taskCode, &gojira.Comment{Body: body})
 	if err != nil {
 		if resp != nil && resp.StatusCode == http.StatusNotFound {
-			return nil, fmt.Errorf("%w: %s", ErrTaskNotFound, taskCode)
+			return nil, fmt.Errorf("task %s not found", taskCode)
 		}
 		return nil, fmt.Errorf("failed to add comment to issue %s: %w", taskCode, err)
 	}

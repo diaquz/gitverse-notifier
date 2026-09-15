@@ -48,6 +48,8 @@ type Config struct {
 	TelegramParseMode string `mapstructure:"TELEGRAM_PARSE_MODE"`
 
 	GitverseBaseURL string `mapstructure:"GITVERSE_BASE_URL"`
+	GitverseAPIURL  string `mapstructure:"GITVERSE_API_URL"`
+	GitverseToken   string `mapstructure:"GITVERSE_TOKEN"`
 }
 
 func Setup(configPath string) {
