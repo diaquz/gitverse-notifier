@@ -39,6 +39,7 @@ type PullRequestInfo struct {
 	Title  string
 	Body   string
 	State  string
+	Merged bool
 	Author Actor
 	URL    string
 }
@@ -134,4 +135,12 @@ func BranchName(ref string) string {
 		}
 	}
 	return ref
+}
+
+func (p PullRequestInfo) EffectiveState() string {
+	if p.Merged {
+		return "merged"
+	}
+
+	return p.State
 }

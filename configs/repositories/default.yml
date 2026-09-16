@@ -19,6 +19,20 @@ action_rules:
     action: telegram.notify
     template: telegram/pr_opened
 
+  - on: pull_request.edited
+    action: utils.log
+
+  - on: pull_request.closed
+    state: merged
+    action: utils.log
+
+  - on: pull_request.closed
+    state: closed
+    action: utils.log
+
+  - on: pull_request.synchronized
+    action: utils.log
+
   - on: pull_request.review_requested
     action: telegram.notify
     template: telegram/review_requested
@@ -64,6 +78,7 @@ action_rules:
     action: utils.log
 
   - on: cicd.status
+    # state: success  # optional filter: success / failure / pending / ...
     action: utils.log
     cicd_context: rspec
     cicd_state: failure

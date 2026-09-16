@@ -34,6 +34,7 @@ func (a *UtilsLog) Run(ctx context.Context, ev events.Event, rule *events.Action
 		"issue_keys", strings.Join(ev.IssueKeys, ","),
 		"pr", ev.PullRequest.Number,
 		"title", ev.PullRequest.Title,
+		"pr_state", ev.PullRequest.EffectiveState(),
 		"comment", ev.Comment.Body,
 		"status_context", ev.Status.Context,
 		"status_state", ev.Status.State,

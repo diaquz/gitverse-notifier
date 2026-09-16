@@ -14,6 +14,7 @@ const versionHeader = "application/vnd.gitverse.object+json;version=1"
 
 type Client struct {
 	resty *resty.Client
+	cache PullRequestStore
 }
 
 func NewClient() (*Client, error) {
@@ -22,7 +23,10 @@ func NewClient() (*Client, error) {
 		return nil, fmt.Errorf("GITVERSE_API_URL and GITVERSE_TOKEN configs required")
 	}
 
-	return &Client{resty: newRestyClient(cfg.GitverseAPIURL, cfg.GitverseToken)}, nil
+	return &Client{
+		resty: newRestyClient(cfg.GitverseAPIURL, cfg.GitverseToken),
+		cache: NewMemoryPullRequestStore(),
+	}, nil
 }
 
 func newRestyClient(baseURL, token string) *resty.Client {
@@ -33,18 +37,35 @@ func newRestyClient(baseURL, token string) *resty.Client {
 		SetTimeout(30 * time.Second)
 }
 
-func (c *Client) GetPullRequest(ctx context.Context, repository string, number int) (pr *PullRequest, err error) {
+func (c *Client) GetPullRequestWithCache(ctx context.Context, repository string, number int, update bool) (*PullRequest, error) {
+	if !update {
+		if pr, ok := c.cache.Get(repository, number); ok {
+			return pr, nil
+		}
+	}
+
+	pr, err := c.GetPullRequest(ctx, repository, number)
+	if err != nil {
+		return nil, err
+	}
+
+	c.cache.Set(repository, number, pr)
+	return pr, nil
+}
+
+func (c *Client) GetPullRequest(ctx context.Context, repository string, number int) (*PullRequest, error) {
 	if repository == "" || number <= 0 {
 		return nil, fmt.Errorf("invalid pull request parameters: %s/pulls/%d", repository, number)
 	}
 
+	var pr PullRequest
 	resp, err := c.resty.R().
 		SetContext(ctx).
 		SetPathParams(map[string]string{
 			"repo":   repository,
 			"number": fmt.Sprintf("%d", number),
 		}).
-		SetResult(pr).
+		SetResult(&pr).
 		Get("/repos/{repo}/pulls/{number}")
 
 	if err != nil {
@@ -56,5 +77,5 @@ func (c *Client) GetPullRequest(ctx context.Context, repository string, number i
 			resp.StatusCode(), resp.Request.URL, string(resp.Body()))
 	}
 
-	return
+	return &pr, nil
 }

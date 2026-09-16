@@ -42,6 +42,15 @@ func (s *RepositorySettings) ActionsByEvent(event events.Event) []events.ActionR
 	return actions
 }
 
+func (s *RepositorySettings) HasPotentialActions(event events.Event) bool {
+	for _, rule := range s.Actions {
+		if rule.PotentiallyAllowed(&event) {
+			return true
+		}
+	}
+	return false
+}
+
 func (s *RepositorySettings) RenderActionsCodes() string {
 	codes := make([]string, 0, len(s.Actions))
 	for _, action := range s.Actions {

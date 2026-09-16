@@ -3,7 +3,6 @@ package parsers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"testing"
 
 	"gitverse-notifier/pkg/events"
@@ -12,27 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type stubEnricher struct {
-	name string
-	err  error
-	seen []*events.Event
-}
-
-func (s *stubEnricher) Name() string { return s.name }
-
-func (s *stubEnricher) Enrich(_ context.Context, event *events.Event) error {
-	cloned := *event
-	s.seen = append(s.seen, &cloned)
-	return s.err
-}
-
-func resetGlobalParser(t *testing.T) {
-	t.Helper()
-	prev := globalEventParser
-	t.Cleanup(func() { globalEventParser = prev })
-	globalEventParser = eventParser{}
-}
-
 func mustJSON(t *testing.T, v any) []byte {
 	t.Helper()
 	data, err := json.Marshal(v)
@@ -40,18 +18,7 @@ func mustJSON(t *testing.T, v any) []byte {
 	return data
 }
 
-func TestSetupEventParser(t *testing.T) {
-	resetGlobalParser(t)
-
-	enricher := &stubEnricher{name: "stub"}
-	require.NoError(t, SetupEventParser(enricher))
-	require.Len(t, globalEventParser.enrichers, 1)
-	assert.Equal(t, "stub", globalEventParser.enrichers[0].Name())
-}
-
 func TestParseEvent_PullRequestOpened(t *testing.T) {
-	resetGlobalParser(t)
-
 	body := mustJSON(t, map[string]any{
 		"action": "opened",
 		"number": 42,
@@ -90,8 +57,6 @@ func TestParseEvent_PullRequestOpened(t *testing.T) {
 }
 
 func TestParseEvent_PullRequestReviewComment(t *testing.T) {
-	resetGlobalParser(t)
-
 	body := mustJSON(t, map[string]any{
 		"repository": map[string]any{
 			"full_name": "org/app",
@@ -121,8 +86,6 @@ func TestParseEvent_PullRequestReviewComment(t *testing.T) {
 }
 
 func TestParseEvent_PullRequestReviewComment_EmptyContentStillSetsComment(t *testing.T) {
-	resetGlobalParser(t)
-
 	body := mustJSON(t, map[string]any{
 		"repository": map[string]any{"fullName": "org/app"},
 		"sender":     map[string]any{"name": "reviewer"},
@@ -143,8 +106,6 @@ func TestParseEvent_PullRequestReviewComment_EmptyContentStillSetsComment(t *tes
 }
 
 func TestParseEvent_IssueComment(t *testing.T) {
-	resetGlobalParser(t)
-
 	body := mustJSON(t, map[string]any{
 		"repository": map[string]any{"fullName": "org/app"},
 		"sender":     map[string]any{"name": "carol"},
@@ -172,8 +133,6 @@ func TestParseEvent_IssueComment(t *testing.T) {
 }
 
 func TestParseEvent_IssueComment_FallsBackToSenderAuthor(t *testing.T) {
-	resetGlobalParser(t)
-
 	body := mustJSON(t, map[string]any{
 		"repository": map[string]any{"fullName": "org/app"},
 		"sender":     map[string]any{"name": "carol"},
@@ -189,8 +148,6 @@ func TestParseEvent_IssueComment_FallsBackToSenderAuthor(t *testing.T) {
 }
 
 func TestParseEvent_BranchPush(t *testing.T) {
-	resetGlobalParser(t)
-
 	body := mustJSON(t, map[string]any{
 		"ref":          "refs/heads/main",
 		"before":       "aaa",
@@ -215,8 +172,6 @@ func TestParseEvent_BranchPush(t *testing.T) {
 }
 
 func TestParseEvent_BranchCreatedAndDeleted(t *testing.T) {
-	resetGlobalParser(t)
-
 	createdBody := mustJSON(t, map[string]any{
 		"ref": "refs/heads/feature",
 		"repository": map[string]any{
@@ -243,8 +198,6 @@ func TestParseEvent_BranchCreatedAndDeleted(t *testing.T) {
 }
 
 func TestParseEvent_CICDStatus(t *testing.T) {
-	resetGlobalParser(t)
-
 	body := mustJSON(t, map[string]any{
 		"state":       "success",
 		"context":     "ci/tests",
@@ -269,8 +222,6 @@ func TestParseEvent_CICDStatus(t *testing.T) {
 }
 
 func TestParseEvent_PullRequestAuthorFallsBackToSender(t *testing.T) {
-	resetGlobalParser(t)
-
 	body := mustJSON(t, map[string]any{
 		"action": "closed",
 		"number": 5,
@@ -293,8 +244,6 @@ func TestParseEvent_PullRequestAuthorFallsBackToSender(t *testing.T) {
 }
 
 func TestParseEvent_UsesActionFromBodyForTypeResolution(t *testing.T) {
-	resetGlobalParser(t)
-
 	cases := []struct {
 		action string
 		want   events.EventType
@@ -326,8 +275,6 @@ func TestParseEvent_UsesActionFromBodyForTypeResolution(t *testing.T) {
 }
 
 func TestParseEvent_Errors(t *testing.T) {
-	resetGlobalParser(t)
-
 	t.Run("invalid common json", func(t *testing.T) {
 		_, err := ParseEvent(context.Background(), "push", "push", []byte("{"))
 		require.Error(t, err)
@@ -375,34 +322,7 @@ func TestParseEvent_Errors(t *testing.T) {
 	})
 }
 
-func TestParseEvent_RunsEnrichersAndIgnoresEnricherErrors(t *testing.T) {
-	resetGlobalParser(t)
-
-	ok := &stubEnricher{name: "ok"}
-	failing := &stubEnricher{name: "failing", err: errors.New("boom")}
-	require.NoError(t, SetupEventParser(ok, failing))
-
-	body := mustJSON(t, map[string]any{
-		"ref": "refs/heads/main",
-		"repository": map[string]any{
-			"fullName": "org/app",
-		},
-		"sender": map[string]any{"name": "alice"},
-	})
-
-	event, err := ParseEvent(context.Background(), "push", "push", body)
-	require.NoError(t, err)
-	assert.Equal(t, events.BranchPush, event.Type)
-
-	require.Len(t, ok.seen, 1)
-	require.Len(t, failing.seen, 1)
-	assert.Equal(t, "org/app", ok.seen[0].Repository)
-	assert.Equal(t, events.BranchPush, failing.seen[0].Type)
-}
-
 func TestParseEvent_EmptyBodyFailsOnTypedPayload(t *testing.T) {
-	resetGlobalParser(t)
-
 	// fillCommon accepts an empty body, but type-specific fillers still require JSON.
 	_, err := ParseEvent(context.Background(), "push", "push", nil)
 	require.Error(t, err)
@@ -410,8 +330,6 @@ func TestParseEvent_EmptyBodyFailsOnTypedPayload(t *testing.T) {
 }
 
 func TestParseEvent_ReviewApprovedAndRejected(t *testing.T) {
-	resetGlobalParser(t)
-
 	approvedBody := mustJSON(t, map[string]any{
 		"repository": map[string]any{"fullName": "org/app"},
 		"sender":     map[string]any{"name": "approver"},

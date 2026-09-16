@@ -24,6 +24,10 @@ func NewDispatcher(manager *repositories.RepositoriesManager, handlers ...Action
 	return d
 }
 
+func (d *Dispatcher) PotentialyDispathable(event events.Event) bool {
+	return d.manager.HasPotentialActions(event.Repository, event)
+}
+
 func (d *Dispatcher) Dispatch(ctx context.Context, event events.Event) {
 	rules := d.manager.ActionsFor(event.Repository, event)
 	if len(rules) == 0 {

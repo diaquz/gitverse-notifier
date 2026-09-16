@@ -37,6 +37,11 @@ func (m *RepositoriesManager) ActionsFor(repository string, event events.Event) 
 	return matched
 }
 
+func (m *RepositoriesManager) HasPotentialActions(repository string, event events.Event) bool {
+	settings := m.SettingsByRepository(repository)
+	return settings.HasPotentialActions(event)
+}
+
 func (m *RepositoriesManager) SettingsByRepository(repository string) *RepositorySettings {
 	if settings, ok := m.mapping[repository]; ok {
 		return settings
@@ -85,7 +90,7 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 		}
 
 		manager.mapping[settings.Repository] = settings
-		logger.Debug(nil, "loaded repository settings", 
+		logger.Debug(nil, "loaded repository settings",
 			"action", "repositories_setup",
 			"name", name,
 			"repository", settings.Repository,

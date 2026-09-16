@@ -7,8 +7,9 @@ import (
 	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/dispath"
 	"gitverse-notifier/pkg/dispath/handlers"
+	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/enrichers"
-	"gitverse-notifier/pkg/events/parsers"
+	"gitverse-notifier/pkg/integrations/gitverse"
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/integrations/telegram"
 	"gitverse-notifier/pkg/logger"
@@ -41,13 +42,6 @@ func main() {
 		logger.Fatal(ctx, err)
 	}
 
-	if err := parsers.SetupEventParser(
-		enrichers.NewJiraIssueKeys(manager),
-		enrichers.NewGitverseLinks(manager),
-	); err != nil {
-		logger.Fatal(ctx, err)
-	}
-
 	jiraClient, jiraErr := jira.NewJiraClient()
 	if jiraErr != nil {
 		logger.Fatal(ctx, jiraErr)
@@ -65,6 +59,22 @@ func main() {
 		handlers.NewUtilsLog(),
 	)
 
-	srv := server.NewHttpServer(dispatcher)
+	eventEnrichers := make([]events.Enricher, 0, 3)
+
+	gitverseClient, gitverseErr := gitverse.NewClient()
+	if gitverseErr != nil {
+		logger.Error(ctx, "failed to configure gitverse client", "err", gitverseErr)
+	} else {
+		eventEnrichers = append(eventEnrichers,
+			enrichers.NewGitversePullRequest(gitverseClient))
+	}
+
+	eventEnrichers = append(eventEnrichers,
+		enrichers.NewJiraIssueKeys(manager),
+		enrichers.NewGitverseLinks(manager),
+	)
+
+	proc := processor.New(dispatcher, eventEnrichers...)
+	srv := server.NewHttpServer(proc)
 	logger.Fatal(ctx, srv.Run())
 }
