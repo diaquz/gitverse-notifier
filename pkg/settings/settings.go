@@ -1,4 +1,4 @@
-package repositories
+package settings
 
 import (
 	"fmt"
@@ -12,6 +12,7 @@ type RepositorySettings struct {
 	Url                 string              `yaml:"url"`
 	AllowedJiraProjects []string            `yaml:"allowed_jira_projects"`
 	Actions             []events.ActionRule `yaml:"action_rules"`
+	TelegramTags        map[string]string   `yaml:"telegram_tags"`
 }
 
 // IsJiraCodeAllowed проверяет, разрешён ли код проекта Jira
@@ -40,6 +41,15 @@ func (s *RepositorySettings) ActionsByEvent(event events.Event) []events.ActionR
 		actions = append(actions, rule)
 	}
 	return actions
+}
+
+func (s *RepositorySettings) HasPotentialActions(event events.Event) bool {
+	for _, rule := range s.Actions {
+		if rule.PotentiallyAllowed(&event) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *RepositorySettings) RenderActionsCodes() string {

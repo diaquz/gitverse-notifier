@@ -5,15 +5,15 @@ import (
 
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
-	"gitverse-notifier/pkg/repositories"
+	"gitverse-notifier/pkg/settings"
 )
 
 type Dispatcher struct {
-	manager  *repositories.RepositoriesManager
+	manager  *settings.SettingsManager
 	handlers map[string]ActionHandler
 }
 
-func NewDispatcher(manager *repositories.RepositoriesManager, handlers ...ActionHandler) *Dispatcher {
+func NewDispatcher(manager *settings.SettingsManager, handlers ...ActionHandler) *Dispatcher {
 	d := &Dispatcher{
 		manager:  manager,
 		handlers: make(map[string]ActionHandler, len(handlers)),
@@ -22,6 +22,10 @@ func NewDispatcher(manager *repositories.RepositoriesManager, handlers ...Action
 		d.handlers[h.Name()] = h
 	}
 	return d
+}
+
+func (d *Dispatcher) PotentialyDispathable(event events.Event) bool {
+	return d.manager.HasPotentialActions(event.Repository, event)
 }
 
 func (d *Dispatcher) Dispatch(ctx context.Context, event events.Event) {

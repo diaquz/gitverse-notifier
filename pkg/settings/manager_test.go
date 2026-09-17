@@ -1,4 +1,4 @@
-package repositories
+package settings
 
 import (
 	"os"
@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newTestManager(defaultSettings RepositorySettings, repos map[string]*RepositorySettings) *RepositoriesManager {
+func newTestManager(defaultSettings RepositorySettings, repos map[string]*RepositorySettings) *SettingsManager {
 	if repos == nil {
 		repos = make(map[string]*RepositorySettings)
 	}
-	return &RepositoriesManager{
+	return &SettingsManager{
 		mapping:        repos,
 		defaultSetting: defaultSettings,
 	}
@@ -286,11 +286,11 @@ action_rules:
 	})
 }
 
-func TestSetupRepositoriesManager(t *testing.T) {
+func TestSetupSettingsManager(t *testing.T) {
 	prev := config.GlobalConfig
 	t.Cleanup(func() { config.GlobalConfig = prev })
 
-	t.Run("loads default and specific repositories", func(t *testing.T) {
+	t.Run("loads default and specific settings", func(t *testing.T) {
 		dir := t.TempDir()
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "default.yml"), []byte(`
 repository: any
@@ -317,7 +317,7 @@ action_rules:
 			GitverseBaseURL:     "https://gitverse.example",
 		}
 
-		manager, err := SetupRepositoriesManager()
+		manager, err := SetupSettingsManager()
 		require.NoError(t, err)
 		require.NotNil(t, manager)
 
@@ -344,21 +344,21 @@ action_rules: []
 
 		config.GlobalConfig = &config.Config{RepositoriesDirPath: dir}
 
-		manager, err := SetupRepositoriesManager()
+		manager, err := SetupSettingsManager()
 		assert.Nil(t, manager)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "default repository config")
 	})
 
-	t.Run("fails when repositories directory is missing", func(t *testing.T) {
+	t.Run("fails when settings directory is missing", func(t *testing.T) {
 		config.GlobalConfig = &config.Config{
 			RepositoriesDirPath: filepath.Join(t.TempDir(), "does-not-exist"),
 		}
 
-		manager, err := SetupRepositoriesManager()
+		manager, err := SetupSettingsManager()
 		assert.Nil(t, manager)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to read repositories dir")
+		assert.Contains(t, err.Error(), "failed to read settings dir")
 	})
 
 	t.Run("fails when a repository file is invalid", func(t *testing.T) {
@@ -376,7 +376,7 @@ action_rules:
 
 		config.GlobalConfig = &config.Config{RepositoriesDirPath: dir}
 
-		manager, err := SetupRepositoriesManager()
+		manager, err := SetupSettingsManager()
 		assert.Nil(t, manager)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unknown event")

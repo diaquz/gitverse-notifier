@@ -17,17 +17,17 @@ import (
 
 type HttpServer struct {
 	addr           string
-	dispatcher     *dispath.Dispatcher
+	processor      *dispath.Processor
 	accounts       gin.Accounts
 	logAllRequests bool
 }
 
-func NewHttpServer(dispatcher *dispath.Dispatcher) *HttpServer {
+func NewHttpServer(proc *dispath.Processor) *HttpServer {
 	addr := net.JoinHostPort(config.GlobalConfig.BindHost, config.GlobalConfig.HTTPPort)
 
 	return &HttpServer{
 		addr:           addr,
-		dispatcher:     dispatcher,
+		processor:      proc,
 		logAllRequests: config.GlobalConfig.LogRequests,
 		accounts: gin.Accounts{
 			config.GlobalConfig.BasicAuthUser: config.GlobalConfig.BasicAuthPassword,
@@ -95,7 +95,7 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 	ginCtx.Status(http.StatusOK)
 
 	go func(ctx context.Context, event events.Event) {
-		s.dispatcher.Dispatch(ctx, event)
+		s.processor.Process(ctx, event)
 	}(ctx, event)
 }
 

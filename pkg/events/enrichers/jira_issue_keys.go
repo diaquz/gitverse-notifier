@@ -7,7 +7,7 @@ import (
 
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
-	"gitverse-notifier/pkg/repositories"
+	"gitverse-notifier/pkg/settings"
 )
 
 var (
@@ -15,10 +15,10 @@ var (
 )
 
 type JiraIssueKeys struct {
-	manager *repositories.RepositoriesManager
+	manager *settings.SettingsManager
 }
 
-func NewJiraIssueKeys(manager *repositories.RepositoriesManager) *JiraIssueKeys {
+func NewJiraIssueKeys(manager *settings.SettingsManager) *JiraIssueKeys {
 	return &JiraIssueKeys{manager: manager}
 }
 
@@ -26,11 +26,11 @@ func (e *JiraIssueKeys) Name() string {
 	return "jira.issue_keys"
 }
 
-func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
-	if event == nil {
-		return nil
-	}
+func (e *JiraIssueKeys) Skip(event *events.Event) bool {
+	return event == nil
+}
 
+func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 	keys := make([]string, 0, 1)
 	seen := make(map[string]struct{})
 

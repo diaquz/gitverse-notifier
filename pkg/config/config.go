@@ -48,6 +48,10 @@ type Config struct {
 	TelegramParseMode string `mapstructure:"TELEGRAM_PARSE_MODE"`
 
 	GitverseBaseURL string `mapstructure:"GITVERSE_BASE_URL"`
+	GitverseAPIURL  string `mapstructure:"GITVERSE_API_URL"`
+	GitverseToken   string `mapstructure:"GITVERSE_TOKEN"`
+
+	CacheTTL int `mapstructure:"CACHE_TTL"`
 }
 
 func Setup(configPath string) {
@@ -64,12 +68,10 @@ func getDefaultConfig() Config {
 	dataFolderPath := filepath.Join(rootPath, "data")
 	logDirPath := filepath.Join(dataFolderPath, "logs")
 
-	configPath := filepath.Join(rootPath, "configs")
-	repositoriesPath := filepath.Join(configPath, "repositories")
-
 	templatesPath := filepath.Join(rootPath, "templates")
+	settingsPath := filepath.Join(rootPath, "configs")
 
-	folders := []string{dataFolderPath, logDirPath, configPath, templatesPath, repositoriesPath}
+	folders := []string{dataFolderPath, logDirPath, templatesPath, settingsPath}
 	for i := range folders {
 		if err := EnsureDirExist(folders[i]); err != nil {
 			log.Fatalf("Create folder failed: %s", err.Error())
@@ -81,9 +83,9 @@ func getDefaultConfig() Config {
 		LogDirPath:          logDirPath,
 		LogMaxSize:          15,
 		LogMaxAge:           7,
-		ConfigsDirPath:      configPath,
+		ConfigsDirPath:      settingsPath,
 		TemplatesDirPath:    templatesPath,
-		RepositoriesDirPath: repositoriesPath,
+		RepositoriesDirPath: settingsPath,
 		BindHost:            "0.0.0.0",
 		HTTPPort:            "9001",
 		LogLevel:            "INFO",
@@ -91,6 +93,7 @@ func getDefaultConfig() Config {
 		LanguageCode:        "ru",
 		TemplatesPattern:    "**/*.tmpl",
 		TelegramParseMode:   "MarkdownV2",
+		CacheTTL:            60,
 	}
 }
 

@@ -32,15 +32,18 @@ type Actor struct {
 	Name  string
 	Email string
 	URL   string
+	TgTag string
 }
 
 type PullRequestInfo struct {
-	Number int
-	Title  string
-	Body   string
-	State  string
-	Author Actor
-	URL    string
+	Number    int
+	Title     string
+	Body      string
+	State     string
+	Merged    bool
+	Author    Actor
+	URL       string
+	Reviewers []Actor
 }
 
 type CommentInfo struct {
@@ -52,6 +55,8 @@ type PushInfo struct {
 	Before       string
 	After        string
 	TotalCommits int
+	CommitTitle  string
+	URL          string
 }
 
 type StatusInfo struct {
@@ -134,4 +139,12 @@ func BranchName(ref string) string {
 		}
 	}
 	return ref
+}
+
+func (p PullRequestInfo) EffectiveState() string {
+	if p.Merged {
+		return "merged"
+	}
+
+	return p.State
 }

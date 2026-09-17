@@ -4,16 +4,19 @@ import (
 	"context"
 	"flag"
 
+	"gitverse-notifier/pkg/cache"
 	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/dispath"
 	"gitverse-notifier/pkg/dispath/handlers"
+	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/enrichers"
-	"gitverse-notifier/pkg/events/parsers"
+	"gitverse-notifier/pkg/integrations/gitverse"
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/integrations/telegram"
 	"gitverse-notifier/pkg/logger"
-	"gitverse-notifier/pkg/repositories"
+	gvqueries "gitverse-notifier/pkg/queries/gitverse"
 	"gitverse-notifier/pkg/server"
+	"gitverse-notifier/pkg/settings"
 	"gitverse-notifier/pkg/templates"
 )
 
@@ -31,20 +34,13 @@ func main() {
 	logger.SetupLogger(config.GlobalConfig)
 	ctx := context.Background()
 
-	manager, err := repositories.SetupRepositoriesManager()
+	manager, err := settings.SetupSettingsManager()
 	if err != nil {
 		logger.Fatal(ctx, err)
 	}
 
 	engine, err := templates.SetupTemplateEngine()
 	if err != nil {
-		logger.Fatal(ctx, err)
-	}
-
-	if err := parsers.SetupEventParser(
-		enrichers.NewJiraIssueKeys(manager),
-		enrichers.NewGitverseLinks(manager),
-	); err != nil {
 		logger.Fatal(ctx, err)
 	}
 
@@ -65,6 +61,24 @@ func main() {
 		handlers.NewUtilsLog(),
 	)
 
-	srv := server.NewHttpServer(dispatcher)
+	eventEnrichers := make([]events.Enricher, 0, 3)
+
+	gitverseClient, gitverseErr := gitverse.NewClient()
+	if gitverseErr != nil {
+		logger.Error(ctx, "failed to configure gitverse client", "err", gitverseErr)
+	} else {
+		queries := gvqueries.New(gitverseClient, cache.NewMemoryPullRequestCache())
+		eventEnrichers = append(eventEnrichers, enrichers.NewGitversePullRequest(queries))
+		eventEnrichers = append(eventEnrichers, enrichers.NewGitverseCommit(queries))
+	}
+
+	eventEnrichers = append(eventEnrichers,
+		enrichers.NewJiraIssueKeys(manager),
+		enrichers.NewGitverseLinks(manager),
+		enrichers.NewTelegramLinks(manager),
+	)
+
+	proc := dispath.New(dispatcher, eventEnrichers...)
+	srv := server.NewHttpServer(proc)
 	logger.Fatal(ctx, srv.Run())
 }

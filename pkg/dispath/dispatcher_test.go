@@ -10,7 +10,7 @@ import (
 
 	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/events"
-	"gitverse-notifier/pkg/repositories"
+	"gitverse-notifier/pkg/settings"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,7 +55,7 @@ func (h *stubHandler) lastRun() (runCall, bool) {
 	return h.runs[len(h.runs)-1], true
 }
 
-func setupTestManager(t *testing.T, yamlContents ...string) *repositories.RepositoriesManager {
+func setupTestManager(t *testing.T, yamlContents ...string) *settings.SettingsManager {
 	t.Helper()
 	require.NotEmpty(t, yamlContents)
 
@@ -73,7 +73,7 @@ func setupTestManager(t *testing.T, yamlContents ...string) *repositories.Reposi
 	}
 	t.Cleanup(func() { config.GlobalConfig = prev })
 
-	manager, err := repositories.SetupRepositoriesManager()
+	manager, err := settings.SetupSettingsManager()
 	require.NoError(t, err)
 	return manager
 }

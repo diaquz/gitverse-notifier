@@ -5,7 +5,9 @@ go 1.27
 require (
 	github.com/andygrunwald/go-jira v1.16.1
 	github.com/gin-gonic/gin v1.12.0
+	github.com/go-resty/resty/v2 v2.17.2
 	github.com/go-telegram/bot v1.27.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.12.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

@@ -1,4 +1,4 @@
-package repositories
+package settings
 
 import (
 	"fmt"
@@ -17,17 +17,17 @@ const (
 	DefaultRepository = "any"
 )
 
-type RepositoriesManager struct {
+type SettingsManager struct {
 	mapping        map[string]*RepositorySettings
 	defaultSetting RepositorySettings
 }
 
-func (m *RepositoriesManager) IsJiraCodeAllowed(repository, code string) bool {
+func (m *SettingsManager) IsJiraCodeAllowed(repository, code string) bool {
 	settings := m.SettingsByRepository(repository)
 	return settings.IsJiraCodeAllowed(code)
 }
 
-func (m *RepositoriesManager) ActionsFor(repository string, event events.Event) []events.ActionRule {
+func (m *SettingsManager) ActionsFor(repository string, event events.Event) []events.ActionRule {
 	settings := m.SettingsByRepository(repository)
 	if settings == nil || event.Type == events.Unknown {
 		return nil
@@ -37,21 +37,26 @@ func (m *RepositoriesManager) ActionsFor(repository string, event events.Event) 
 	return matched
 }
 
-func (m *RepositoriesManager) SettingsByRepository(repository string) *RepositorySettings {
+func (m *SettingsManager) HasPotentialActions(repository string, event events.Event) bool {
+	settings := m.SettingsByRepository(repository)
+	return settings.HasPotentialActions(event)
+}
+
+func (m *SettingsManager) SettingsByRepository(repository string) *RepositorySettings {
 	if settings, ok := m.mapping[repository]; ok {
 		return settings
 	}
 	return &m.defaultSetting
 }
 
-func SetupRepositoriesManager() (*RepositoriesManager, error) {
-	repositoriesDir := config.GlobalConfig.RepositoriesDirPath
-	entries, err := os.ReadDir(repositoriesDir)
+func SetupSettingsManager() (*SettingsManager, error) {
+	settingsDir := config.GlobalConfig.RepositoriesDirPath
+	entries, err := os.ReadDir(settingsDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read repositories dir %s: %w", repositoriesDir, err)
+		return nil, fmt.Errorf("failed to read settings dir %s: %w", settingsDir, err)
 	}
 
-	manager := &RepositoriesManager{
+	manager := &SettingsManager{
 		mapping: make(map[string]*RepositorySettings),
 	}
 
@@ -60,15 +65,15 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 		name := entry.Name()
 
 		if entry.IsDir() {
-			logger.Debug(nil, "directory skipped", "action", "repositories_setup", "name", name)
+			logger.Debug(nil, "directory skipped", "action", "settings_setup", "name", name)
 			continue
 		}
 		if !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") {
-			logger.Debug(nil, "config file skipped", "action", "repositories_setup", "name", name)
+			logger.Debug(nil, "config file skipped", "action", "settings_setup", "name", name)
 			continue
 		}
 
-		path := filepath.Join(repositoriesDir, name)
+		path := filepath.Join(settingsDir, name)
 		settings, err := loadRepositorySettings(path)
 		if err != nil {
 			return nil, err
@@ -78,15 +83,15 @@ func SetupRepositoriesManager() (*RepositoriesManager, error) {
 			manager.defaultSetting = *settings
 			defaultSettingsInitialized = true
 			logger.Debug(nil, "loaded default repository settings",
-				"action", "repositories_setup",
+				"action", "settings_setup",
 				"name", name,
 				"actions", manager.defaultSetting.RenderActionsCodes())
 			continue
 		}
 
 		manager.mapping[settings.Repository] = settings
-		logger.Debug(nil, "loaded repository settings", 
-			"action", "repositories_setup",
+		logger.Debug(nil, "loaded repository settings",
+			"action", "settings_setup",
 			"name", name,
 			"repository", settings.Repository,
 			"actions", manager.defaultSetting.RenderActionsCodes())

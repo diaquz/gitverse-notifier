@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -14,8 +13,6 @@ import (
 	"github.com/go-telegram/bot"
 	"github.com/go-telegram/bot/models"
 )
-
-var ErrNotConfigured = errors.New("telegram is not configured")
 
 type Client struct {
 	bot       *bot.Bot
@@ -30,7 +27,7 @@ func NewTelegramClient() (*Client, error) {
 	chatID := strings.TrimSpace(cfg.TelegramChatID)
 
 	if token == "" || chatID == "" {
-		return nil, fmt.Errorf("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID configs required: %w", ErrNotConfigured)
+		return nil, fmt.Errorf("TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID configs required")
 	}
 
 	opts, err := botOptions(cfg.TelegramProxyURL)
