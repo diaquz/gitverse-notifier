@@ -27,7 +27,7 @@ action_rules:
 
   - on: pull_request.closed
     state: merged
-    action: utils.log
+    action: telegram/pr_merged
 
   - on: pull_request.closed
     state: closed
