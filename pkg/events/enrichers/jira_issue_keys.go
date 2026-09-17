@@ -26,11 +26,11 @@ func (e *JiraIssueKeys) Name() string {
 	return "jira.issue_keys"
 }
 
-func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
-	if event == nil {
-		return nil
-	}
+func (e *JiraIssueKeys) Skip(event *events.Event) bool {
+	return event == nil
+}
 
+func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 	keys := make([]string, 0, 1)
 	seen := make(map[string]struct{})
 

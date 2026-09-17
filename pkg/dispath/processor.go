@@ -27,6 +27,11 @@ func (p *Processor) Process(ctx context.Context, event events.Event) {
 	}
 
 	for _, enricher := range p.enrichers {
+		if enricher.Skip(&event) {
+			logger.Info(ctx, "event enriching skipped", "event", event.Type, "enricher", enricher.Name())
+			continue
+		}
+
 		if err := enricher.Enrich(ctx, &event); err != nil {
 			logger.Error(ctx, "event enriching failed",
 				"action", "event_processing",

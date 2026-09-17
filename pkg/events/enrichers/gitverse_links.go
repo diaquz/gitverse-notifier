@@ -22,6 +22,10 @@ func (e *GitverseLinks) Name() string {
 	return "gitverse.links"
 }
 
+func (e *GitverseLinks) Skip(event *events.Event) bool {
+	return event == nil
+}
+
 func (e *GitverseLinks) Enrich(_ context.Context, event *events.Event) error {
 	baseURL := e.baseURLFor(event.Repository)
 	if baseURL == "" {
@@ -53,7 +57,7 @@ func (e *GitverseLinks) Enrich(_ context.Context, event *events.Event) error {
 func (e *GitverseLinks) baseURLFor(repository string) string {
 	settings := e.manager.SettingsByRepository(repository)
 
-	return strings.TrimRight(strings.TrimSpace(settings.Url), "/")
+	return strings.TrimRight(settings.Url, "/")
 }
 
 func (e *GitverseLinks) withUserURL(baseURL string, actor events.Actor) events.Actor {

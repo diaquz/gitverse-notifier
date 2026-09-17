@@ -27,10 +27,8 @@ func NewHttpServer(proc *dispath.Processor) *HttpServer {
 
 	return &HttpServer{
 		addr:           addr,
-		processor: processor,
+		processor:      proc,
 		logAllRequests: config.GlobalConfig.LogRequests,
-		addr:      addr,
-		processor: proc,
 		accounts: gin.Accounts{
 			config.GlobalConfig.BasicAuthUser: config.GlobalConfig.BasicAuthPassword,
 		},

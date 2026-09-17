@@ -1,4 +1,4 @@
-package stores
+package cache
 
 import (
 	"fmt"
@@ -11,26 +11,27 @@ import (
 
 const cacheCleanupPeriod = 30 * time.Minute
 
-type PullRequestStore interface {
+type PullRequestCache interface {
 	// Во многих событиях есть только заголовок PR, поэтому дополнительно кэширует номер
 	GetByTitle(repo, title string, number int) (*gitverse.PullRequest, bool)
+	GetPRNumber(repo, title string) int
 	Set(repo, title string, number int, pr *gitverse.PullRequest)
 }
 
-type MemoryPullRequestStore struct {
+type MemoryPullRequestCache struct {
 	cache *gocache.Cache
 }
 
-func NewMemoryPullRequestStore() *MemoryPullRequestStore {
+func NewMemoryPullRequestCache() *MemoryPullRequestCache {
 	ttl := time.Duration(config.GlobalConfig.CacheTTL)
-	return &MemoryPullRequestStore{
+	return &MemoryPullRequestCache{
 		cache: gocache.New(ttl*time.Minute, cacheCleanupPeriod),
 	}
 }
 
-func (s *MemoryPullRequestStore) GetByTitle(repo, title string, number int) (pr *gitverse.PullRequest, ok bool) {
+func (s *MemoryPullRequestCache) GetByTitle(repo, title string, number int) (pr *gitverse.PullRequest, ok bool) {
 	if number <= 0 {
-		number = s.getPRNumber(repo, title)
+		number = s.GetPRNumber(repo, title)
 	}
 
 	value, ok := s.cache.Get(prCacheKey(repo, number))
@@ -42,15 +43,15 @@ func (s *MemoryPullRequestStore) GetByTitle(repo, title string, number int) (pr 
 	return
 }
 
-func (s *MemoryPullRequestStore) Set(repo, title string, number int, pr *gitverse.PullRequest) {
+func (s *MemoryPullRequestCache) Set(repo, title string, number int, pr *gitverse.PullRequest) {
 	if pr == nil || number <= 0 {
 		return
 	}
 	s.cache.Set(prCacheKey(repo, number), pr, gocache.DefaultExpiration)
-	s.cache.Set(prNumberCacheKey(repo, title), number, gocache.DefaultExpiration)
+	s.cache.Set(prNumberCacheKey(repo, title), number, 48*time.Hour)
 }
 
-func (s *MemoryPullRequestStore) getPRNumber(repo, title string) int {
+func (s *MemoryPullRequestCache) GetPRNumber(repo, title string) int {
 	value, ok := s.cache.Get(prNumberCacheKey(repo, title))
 	if !ok {
 		return 0

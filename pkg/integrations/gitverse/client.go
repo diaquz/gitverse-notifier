@@ -61,3 +61,30 @@ func (c *Client) GetPullRequest(ctx context.Context, repository string, number i
 
 	return &pr, nil
 }
+
+func (c *Client) GetCommit(ctx context.Context, repository, sha string) (*CommitInfo, error) {
+	if repository == "" || sha == "" {
+		return nil, fmt.Errorf("invalid commit parameters: %s/commits/%s", repository, sha)
+	}
+
+	var commit CommitInfo
+	resp, err := c.resty.R().
+		SetContext(ctx).
+		SetPathParams(map[string]string{
+			"repo": repository,
+			"sha":  sha,
+		}).
+		SetResult(&commit).
+		Get("/repos/{repo}/commits/{sha}")
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to make gitverse request: %w", err)
+	}
+
+	if resp.IsError() {
+		return nil, fmt.Errorf("gitverse api returned %d for %s: %s",
+			resp.StatusCode(), resp.Request.URL, string(resp.Body()))
+	}
+
+	return &commit, nil
+}

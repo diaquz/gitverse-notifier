@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 
+	"gitverse-notifier/pkg/cache"
 	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/dispath"
 	"gitverse-notifier/pkg/dispath/handlers"
@@ -13,6 +14,7 @@ import (
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/integrations/telegram"
 	"gitverse-notifier/pkg/logger"
+	gvqueries "gitverse-notifier/pkg/queries/gitverse"
 	"gitverse-notifier/pkg/server"
 	"gitverse-notifier/pkg/settings"
 	"gitverse-notifier/pkg/templates"
@@ -65,8 +67,9 @@ func main() {
 	if gitverseErr != nil {
 		logger.Error(ctx, "failed to configure gitverse client", "err", gitverseErr)
 	} else {
-		eventEnrichers = append(eventEnrichers,
-			enrichers.NewGitversePullRequest(gitverseClient))
+		queries := gvqueries.New(gitverseClient, cache.NewMemoryPullRequestCache())
+		eventEnrichers = append(eventEnrichers, enrichers.NewGitversePullRequest(queries))
+		eventEnrichers = append(eventEnrichers, enrichers.NewGitverseCommit(queries))
 	}
 
 	eventEnrichers = append(eventEnrichers,

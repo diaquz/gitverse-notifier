@@ -46,6 +46,8 @@ func (rule *ActionRule) cicdStatusAllowed(event *Event) (allowed bool) {
 	if rule.CICDState != "" && event.Status.State != rule.CICDState {
 		return
 	}
+
+	return true
 }
 
 // PotentiallyAllowed проверяет только тип
