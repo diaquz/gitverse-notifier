@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"gitverse-notifier/pkg/config"
+	"gitverse-notifier/pkg/dispath"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/parsers"
 	"gitverse-notifier/pkg/logger"
-	"gitverse-notifier/pkg/processor"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,7 +22,7 @@ type HttpServer struct {
 	logAllRequests bool
 }
 
-func NewHttpServer(proc *processor.Processor) *HttpServer {
+func NewHttpServer(proc *dispath.Processor) *HttpServer {
 	addr := net.JoinHostPort(config.GlobalConfig.BindHost, config.GlobalConfig.HTTPPort)
 
 	return &HttpServer{

@@ -7,7 +7,7 @@ import (
 
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
-	"gitverse-notifier/pkg/repositories"
+	"gitverse-notifier/pkg/settings"
 )
 
 var (
@@ -15,10 +15,10 @@ var (
 )
 
 type JiraIssueKeys struct {
-	manager *repositories.RepositoriesManager
+	manager *settings.SettingsManager
 }
 
-func NewJiraIssueKeys(manager *repositories.RepositoriesManager) *JiraIssueKeys {
+func NewJiraIssueKeys(manager *settings.SettingsManager) *JiraIssueKeys {
 	return &JiraIssueKeys{manager: manager}
 }
 

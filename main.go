@@ -13,8 +13,8 @@ import (
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/integrations/telegram"
 	"gitverse-notifier/pkg/logger"
-	"gitverse-notifier/pkg/repositories"
 	"gitverse-notifier/pkg/server"
+	"gitverse-notifier/pkg/settings"
 	"gitverse-notifier/pkg/templates"
 )
 
@@ -32,7 +32,7 @@ func main() {
 	logger.SetupLogger(config.GlobalConfig)
 	ctx := context.Background()
 
-	manager, err := repositories.SetupRepositoriesManager()
+	manager, err := settings.SetupSettingsManager()
 	if err != nil {
 		logger.Fatal(ctx, err)
 	}
@@ -74,7 +74,7 @@ func main() {
 		enrichers.NewGitverseLinks(manager),
 	)
 
-	proc := processor.New(dispatcher, eventEnrichers...)
+	proc := dispath.New(dispatcher, eventEnrichers...)
 	srv := server.NewHttpServer(proc)
 	logger.Fatal(ctx, srv.Run())
 }

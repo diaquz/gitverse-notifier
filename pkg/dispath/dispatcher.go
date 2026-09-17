@@ -5,15 +5,15 @@ import (
 
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
-	"gitverse-notifier/pkg/repositories"
+	"gitverse-notifier/pkg/settings"
 )
 
 type Dispatcher struct {
-	manager  *repositories.RepositoriesManager
+	manager  *settings.SettingsManager
 	handlers map[string]ActionHandler
 }
 
-func NewDispatcher(manager *repositories.RepositoriesManager, handlers ...ActionHandler) *Dispatcher {
+func NewDispatcher(manager *settings.SettingsManager, handlers ...ActionHandler) *Dispatcher {
 	d := &Dispatcher{
 		manager:  manager,
 		handlers: make(map[string]ActionHandler, len(handlers)),

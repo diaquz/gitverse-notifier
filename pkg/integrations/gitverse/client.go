@@ -14,7 +14,6 @@ const versionHeader = "application/vnd.gitverse.object+json;version=1"
 
 type Client struct {
 	resty *resty.Client
-	cache PullRequestStore
 }
 
 func NewClient() (*Client, error) {
@@ -25,7 +24,6 @@ func NewClient() (*Client, error) {
 
 	return &Client{
 		resty: newRestyClient(cfg.GitverseAPIURL, cfg.GitverseToken),
-		cache: NewMemoryPullRequestStore(),
 	}, nil
 }
 
@@ -35,22 +33,6 @@ func newRestyClient(baseURL, token string) *resty.Client {
 		SetAuthToken(token).
 		SetHeader("Accept", versionHeader).
 		SetTimeout(30 * time.Second)
-}
-
-func (c *Client) GetPullRequestWithCache(ctx context.Context, repository string, number int, update bool) (*PullRequest, error) {
-	if !update {
-		if pr, ok := c.cache.Get(repository, number); ok {
-			return pr, nil
-		}
-	}
-
-	pr, err := c.GetPullRequest(ctx, repository, number)
-	if err != nil {
-		return nil, err
-	}
-
-	c.cache.Set(repository, number, pr)
-	return pr, nil
 }
 
 func (c *Client) GetPullRequest(ctx context.Context, repository string, number int) (*PullRequest, error) {

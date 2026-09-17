@@ -7,14 +7,14 @@ import (
 	"strings"
 
 	"gitverse-notifier/pkg/events"
-	"gitverse-notifier/pkg/repositories"
+	"gitverse-notifier/pkg/settings"
 )
 
 type GitverseLinks struct {
-	manager *repositories.RepositoriesManager
+	manager *settings.SettingsManager
 }
 
-func NewGitverseLinks(manager *repositories.RepositoriesManager) *GitverseLinks {
+func NewGitverseLinks(manager *settings.SettingsManager) *GitverseLinks {
 	return &GitverseLinks{manager: manager}
 }
 
