@@ -32,6 +32,7 @@ type Actor struct {
 	Name  string
 	Email string
 	URL   string
+	TgTag string
 }
 
 type PullRequestInfo struct {

@@ -32,9 +32,9 @@ func (e *GitverseLinks) Enrich(_ context.Context, event *events.Event) error {
 		return nil
 	}
 
-	event.Sender = e.withUserURL(baseURL, event.Sender)
-	event.PullRequest.Author = e.withUserURL(baseURL, event.PullRequest.Author)
-	event.Comment.Author = e.withUserURL(baseURL, event.Comment.Author)
+	e.addUserURL(baseURL, &event.Sender)
+	e.addUserURL(baseURL, &event.PullRequest.Author)
+	e.addUserURL(baseURL, &event.Comment.Author)
 
 	if event.Repository == "" {
 		return nil
@@ -60,12 +60,11 @@ func (e *GitverseLinks) baseURLFor(repository string) string {
 	return strings.TrimRight(settings.Url, "/")
 }
 
-func (e *GitverseLinks) withUserURL(baseURL string, actor events.Actor) events.Actor {
+func (e *GitverseLinks) addUserURL(baseURL string, actor *events.Actor) {
 	name := strings.TrimSpace(actor.Name)
-	if name == "" {
-		return actor
+	if name != "" {
+		actor.URL = fmt.Sprintf("%s/%s", baseURL, url.PathEscape(name))
 	}
 
-	actor.URL = fmt.Sprintf("%s/%s", baseURL, url.PathEscape(name))
-	return actor
+	return
 }

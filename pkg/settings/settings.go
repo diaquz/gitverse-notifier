@@ -12,6 +12,7 @@ type RepositorySettings struct {
 	Url                 string              `yaml:"url"`
 	AllowedJiraProjects []string            `yaml:"allowed_jira_projects"`
 	Actions             []events.ActionRule `yaml:"action_rules"`
+	TelegramTags        map[string]string   `yaml:"telegram_tags"`
 }
 
 // IsJiraCodeAllowed проверяет, разрешён ли код проекта Jira

@@ -20,7 +20,7 @@ func New(dispatcher *Dispatcher, enrichers ...events.Enricher) *Processor {
 }
 
 func (p *Processor) Process(ctx context.Context, event events.Event) {
-	if p.dispatcher.PotentialyDispathable(event) {
+	if !p.dispatcher.PotentialyDispathable(event) {
 		logger.Info(ctx, "no actions for event, skipping",
 			"event", event.Type, "repository", event.Repository)
 		return

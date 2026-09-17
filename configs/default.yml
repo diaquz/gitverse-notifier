@@ -10,6 +10,9 @@ allowed_jira_projects:
   - JIRA
   - TEST
 
+telegram_tags:
+  test: test
+
 action_rules:
   - on: pull_request.opened
     action: jira.comment_issue
@@ -78,7 +81,6 @@ action_rules:
     action: utils.log
 
   - on: cicd.status
-    # state: success  # optional filter: success / failure / pending / ...
     action: utils.log
     cicd_context: rspec
     cicd_state: failure

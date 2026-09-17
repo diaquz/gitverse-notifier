@@ -61,13 +61,12 @@ func applyPullRequest(event *events.Event, pr *gitverse.PullRequest) {
 	if len(pr.RequestedReviewers) > 0 {
 		event.PullRequest.Reviewers = make([]events.Actor, 0, len(pr.RequestedReviewers))
 		for _, reviewer := range pr.RequestedReviewers {
-			actor := events.Actor{
+			event.PullRequest.Reviewers = append(event.PullRequest.Reviewers, events.Actor{
 				ID:    reviewer.ID,
-				Name:  reviewer.Name,
+				Name:  reviewer.Login,
 				Email: reviewer.Email,
 				URL:   reviewer.URL,
-			}
-			event.PullRequest.Reviewers = append(event.PullRequest.Reviewers, actor)
+			})
 		}
 	}
 
@@ -76,5 +75,10 @@ func applyPullRequest(event *events.Event, pr *gitverse.PullRequest) {
 		Name:  pr.User.Login,
 		Email: pr.User.Email,
 		URL:   pr.User.URL,
+	}
+
+	if event.Branch == "" {
+		event.Branch = pr.Head.Label
+		event.Ref = pr.Head.Ref
 	}
 }

@@ -75,6 +75,7 @@ func main() {
 	eventEnrichers = append(eventEnrichers,
 		enrichers.NewJiraIssueKeys(manager),
 		enrichers.NewGitverseLinks(manager),
+		enrichers.NewTelegramLinks(manager),
 	)
 
 	proc := dispath.New(dispatcher, eventEnrichers...)

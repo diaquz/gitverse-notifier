@@ -68,11 +68,10 @@ func getDefaultConfig() Config {
 	dataFolderPath := filepath.Join(rootPath, "data")
 	logDirPath := filepath.Join(dataFolderPath, "logs")
 
-	configPath := filepath.Join(rootPath, "configs")
-	templatesPath := filepath.Join(configPath, "templates")
-	settingsPath := filepath.Join(configPath, "settings")
+	templatesPath := filepath.Join(rootPath, "templates")
+	settingsPath := filepath.Join(rootPath, "configs")
 
-	folders := []string{dataFolderPath, logDirPath, configPath, templatesPath, settingsPath}
+	folders := []string{dataFolderPath, logDirPath, templatesPath, settingsPath}
 	for i := range folders {
 		if err := EnsureDirExist(folders[i]); err != nil {
 			log.Fatalf("Create folder failed: %s", err.Error())
@@ -84,7 +83,7 @@ func getDefaultConfig() Config {
 		LogDirPath:          logDirPath,
 		LogMaxSize:          15,
 		LogMaxAge:           7,
-		ConfigsDirPath:      configPath,
+		ConfigsDirPath:      settingsPath,
 		TemplatesDirPath:    templatesPath,
 		RepositoriesDirPath: settingsPath,
 		BindHost:            "0.0.0.0",
