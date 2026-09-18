@@ -6,13 +6,24 @@ import (
 	"strings"
 )
 
+type BatchSetting struct {
+	Key      string           `yaml:"key"`
+	GroupBy  string           `yaml:"group_by"`
+	Strategy string           `yaml:"use_last_event"`
+	EventRaw string           `yaml:"event"`
+	Event    events.EventType `yaml:"-"`
+	Size     int              `yaml:"size"`
+	Timeout  int              `yaml:"timeout"`
+}
+
 // RepositorySettings хранит настройки конкретного репозитория
 type RepositorySettings struct {
-	Repository          string              `yaml:"repository"`
-	Url                 string              `yaml:"url"`
-	AllowedJiraProjects []string            `yaml:"allowed_jira_projects"`
-	Actions             []events.ActionRule `yaml:"action_rules"`
-	TelegramTags        map[string]string   `yaml:"telegram_tags"`
+	Repository          string            `yaml:"repository"`
+	Url                 string            `yaml:"url"`
+	AllowedJiraProjects []string          `yaml:"allowed_jira_projects"`
+	Actions             []ActionRule      `yaml:"action_rules"`
+	Batches             []BatchSetting    `yaml:"event_batches"`
+	TelegramTags        map[string]string `yaml:"telegram_tags"`
 }
 
 // IsJiraCodeAllowed проверяет, разрешён ли код проекта Jira
@@ -31,8 +42,8 @@ func (s *RepositorySettings) IsJiraCodeAllowed(code string) bool {
 	return false
 }
 
-func (s *RepositorySettings) ActionsByEvent(event events.Event) []events.ActionRule {
-	actions := make([]events.ActionRule, 0)
+func (s *RepositorySettings) ActionsByEvent(event events.Event) []ActionRule {
+	actions := make([]ActionRule, 0)
 	for _, rule := range s.Actions {
 		if !rule.Allowed(&event) {
 			continue
@@ -60,4 +71,14 @@ func (s *RepositorySettings) RenderActionsCodes() string {
 	}
 
 	return strings.Join(codes, ", ")
+}
+
+func (s *RepositorySettings) FindBatchSettings(event *events.Event) *BatchSetting {
+	for i := range len(s.Batches) {
+		if s.Batches[i].Event == event.Type {
+			return &s.Batches[i]
+		}
+	}
+
+	return nil
 }

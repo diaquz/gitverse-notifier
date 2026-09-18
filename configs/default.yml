@@ -13,6 +13,14 @@ allowed_jira_projects:
 telegram_tags:
   test: test
 
+event_batches:
+  - key: events_batch
+    group_by: pull_request_batch
+    strategy: use_last_event
+    event: pull_request.review_requested
+    size: 5
+    timeout: 60
+
 action_rules:
   - on: pull_request.opened
     action: jira.comment_issue

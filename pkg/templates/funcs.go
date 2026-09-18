@@ -115,6 +115,16 @@ func TelegramMention(actor events.Actor) string {
 	return TelegramLink(actor.Name, actor.URL)
 }
 
+func TelegramMentions(actors []events.Actor) string {
+	parts := make([]string, 0, len(actors))
+	for _, actor := range actors {
+		if m := TelegramMention(actor); m != "" {
+			parts = append(parts, m)
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
 func TelegramLastReviewer(reviewers []events.Actor) string {
 	reviewer, err := LastReviewer(reviewers)
 	if err != nil {

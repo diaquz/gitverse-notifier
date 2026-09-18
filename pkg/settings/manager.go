@@ -27,7 +27,7 @@ func (m *SettingsManager) IsJiraCodeAllowed(repository, code string) bool {
 	return settings.IsJiraCodeAllowed(code)
 }
 
-func (m *SettingsManager) ActionsFor(repository string, event events.Event) []events.ActionRule {
+func (m *SettingsManager) ActionsFor(repository string, event events.Event) []ActionRule {
 	settings := m.SettingsByRepository(repository)
 	if settings == nil || event.Type == events.Unknown {
 		return nil
@@ -133,6 +133,14 @@ func loadRepositorySettings(path string) (*RepositorySettings, error) {
 			return nil, fmt.Errorf("action for unknown event '%s' in %q", settings.Actions[i].OnCode, path)
 		}
 		settings.Actions[i].On = eventType
+	}
+
+	for i := range settings.Batches {
+		eventType, ok := events.ParseEventType(settings.Batches[i].EventRaw)
+		if !ok {
+			return nil, fmt.Errorf("action for unknown event '%s' in %q", settings.Actions[i].OnCode, path)
+		}
+		settings.Batches[i].Event = eventType
 	}
 
 	return &settings, nil

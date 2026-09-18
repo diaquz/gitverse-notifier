@@ -52,6 +52,9 @@ type Config struct {
 	GitverseToken   string `mapstructure:"GITVERSE_TOKEN"`
 
 	CacheTTL int `mapstructure:"CACHE_TTL"`
+
+	EventQueueSize   int `mapstructure:"EVENT_QUEUE_SIZE"`
+	EventWorkerCount int  `mapstructure:"EVENT_WORKER_COUNT"`
 }
 
 func Setup(configPath string) {
@@ -94,6 +97,8 @@ func getDefaultConfig() Config {
 		TemplatesPattern:    "**/*.tmpl",
 		TelegramParseMode:   "MarkdownV2",
 		CacheTTL:            60,
+		EventQueueSize:      256,
+		EventWorkerCount:    4,
 	}
 }
 

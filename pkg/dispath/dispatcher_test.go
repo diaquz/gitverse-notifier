@@ -27,13 +27,13 @@ type stubHandler struct {
 
 type runCall struct {
 	event events.Event
-	rule  events.ActionRule
+	rule  settings.ActionRule
 }
 
 func (h *stubHandler) Name() string { return h.name }
 func (h *stubHandler) Ready() bool  { return h.ready }
 
-func (h *stubHandler) Run(_ context.Context, ev events.Event, rule *events.ActionRule) error {
+func (h *stubHandler) Run(_ context.Context, ev events.Event, rule *settings.ActionRule) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.runs = append(h.runs, runCall{event: ev, rule: *rule})

@@ -7,27 +7,26 @@ import (
 	"net/http"
 
 	"gitverse-notifier/pkg/config"
-	"gitverse-notifier/pkg/dispath"
-	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/parsers"
 	"gitverse-notifier/pkg/logger"
+	"gitverse-notifier/pkg/pipeline"
 
 	"github.com/gin-gonic/gin"
 )
 
 type HttpServer struct {
 	addr           string
-	processor      *dispath.Processor
+	pipeline       *pipeline.Pipeline
 	accounts       gin.Accounts
 	logAllRequests bool
 }
 
-func NewHttpServer(proc *dispath.Processor) *HttpServer {
+func NewHttpServer(pipeline *pipeline.Pipeline) *HttpServer {
 	addr := net.JoinHostPort(config.GlobalConfig.BindHost, config.GlobalConfig.HTTPPort)
 
 	return &HttpServer{
 		addr:           addr,
-		processor:      proc,
+		pipeline:       pipeline,
 		logAllRequests: config.GlobalConfig.LogRequests,
 		accounts: gin.Accounts{
 			config.GlobalConfig.BasicAuthUser: config.GlobalConfig.BasicAuthPassword,
@@ -92,11 +91,14 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 			"headers", ginCtx.Request.Header, "body", string(body))
 	}
 
-	ginCtx.Status(http.StatusOK)
+	if err := s.pipeline.Enqueue(ctx, &event); err != nil {
+		logger.Error(ctx, "failed to accept event", "err", err,
+			"event", event.Type, "repository", event.Repository)
+		ginCtx.Status(http.StatusInternalServerError)
+		return
+	}
 
-	go func(ctx context.Context, event events.Event) {
-		s.processor.Process(ctx, event)
-	}(ctx, event)
+	ginCtx.Status(http.StatusOK)
 }
 
 func ctxWithRequestId(ginCtx *gin.Context) (ctx context.Context) {

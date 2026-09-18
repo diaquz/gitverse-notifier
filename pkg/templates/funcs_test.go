@@ -41,3 +41,15 @@ func TestTelegramMention(t *testing.T) {
 	}
 	require.Equal(t, "@last\\_tg", TelegramLastReviewer(reviewers))
 }
+
+func TestTelegramMentions(t *testing.T) {
+	config.GlobalConfig = &config.Config{TelegramParseMode: "MarkdownV2"}
+
+	actors := []events.Actor{
+		{TgTag: "one"},
+		{Name: "two", URL: "https://git.example/u/two"},
+		{TgTag: "three_tag"},
+	}
+	require.Equal(t, "@one, [two](https://git.example/u/two), @three\\_tag", TelegramMentions(actors))
+	require.Equal(t, "", TelegramMentions(nil))
+}

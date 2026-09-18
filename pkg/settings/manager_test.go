@@ -118,13 +118,13 @@ func TestIsJiraCodeAllowed(t *testing.T) {
 func TestActionsFor(t *testing.T) {
 	t.Parallel()
 
-	openedRule := events.ActionRule{
+	openedRule := ActionRule{
 		On:       events.PullRequestOpened,
 		OnCode:   string(events.PullRequestOpened),
 		Action:   "telegram.notify",
 		Template: "telegram/pr_opened",
 	}
-	pushMainRule := events.ActionRule{
+	pushMainRule := ActionRule{
 		On:       events.BranchPush,
 		OnCode:   string(events.BranchPush),
 		Action:   "telegram.notify",
@@ -135,12 +135,12 @@ func TestActionsFor(t *testing.T) {
 	manager := newTestManager(
 		RepositorySettings{
 			Repository: DefaultRepository,
-			Actions:    []events.ActionRule{openedRule},
+			Actions:    []ActionRule{openedRule},
 		},
 		map[string]*RepositorySettings{
 			"org/app": {
 				Repository: "org/app",
-				Actions:    []events.ActionRule{openedRule, pushMainRule},
+				Actions:    []ActionRule{openedRule, pushMainRule},
 			},
 		},
 	)
