@@ -7,6 +7,7 @@ import (
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
 	"gitverse-notifier/pkg/queue"
+	"gitverse-notifier/pkg/queue/batches"
 	"gitverse-notifier/pkg/settings"
 )
 
@@ -27,7 +28,7 @@ func BuildNewPipeline(
 
 	return &Pipeline{
 		queue:      queue.NewMemoryQueue(cfg.EventQueueSize),
-		batches:    queue.NewInMemoryBatchesManager(manager),
+		batches:    batches.NewInMemoryBatchesManager(manager),
 		enrichers:  enrichers,
 		manager:    manager,
 		dispatcher: dispatcher,
@@ -36,12 +37,12 @@ func BuildNewPipeline(
 
 // Enqueue ставит событие в очередь, если событие нужно групировать - пытается добавить в группу
 func (p *Pipeline) Enqueue(ctx context.Context, event *events.Event) error {
-	key, ok := p.batches.Add(event)
+	key, ok := p.batches.Add(ctx, event)
 	if !ok {
 		return p.queue.Enqueue(ctx, event)
 	}
 
-	if events, ok := p.batches.TryProcessBucket(key); ok {
+	if events, ok := p.batches.TryProcessBucket(ctx, key); ok {
 		for _, event := range events {
 			if err := p.queue.Enqueue(ctx, event); err != nil {
 				return err

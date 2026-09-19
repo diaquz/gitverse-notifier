@@ -98,7 +98,7 @@ func getDefaultConfig() Config {
 		TelegramParseMode:   "MarkdownV2",
 		CacheTTL:            60,
 		EventQueueSize:      256,
-		EventWorkerCount:    4,
+		EventWorkerCount:    5,
 	}
 }
 

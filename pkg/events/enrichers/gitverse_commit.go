@@ -21,15 +21,10 @@ func (e *GitverseCommit) Name() string {
 }
 
 func (e *GitverseCommit) Skip(event *events.Event) bool {
-	if event.Type == events.BranchPush && event.Push.After != "" {
-		return true
-	}
-
-	return false
+	return event.Type != events.BranchPush || event.Push.After == ""
 }
 
 func (e *GitverseCommit) Enrich(ctx context.Context, event *events.Event) error {
-	
 
 	commit, err := e.queries.GetCommitInfo(ctx, gvqueries.GetCommitInfo{
 		Repo:      event.Repository,
@@ -49,4 +44,3 @@ func applyCommit(event *events.Event, commit *gitverse.CommitInfo) {
 	event.Push.CommitTitle = commit.Commit.Message
 	event.Push.URL = commit.URL
 }
-

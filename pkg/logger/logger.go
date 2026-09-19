@@ -51,7 +51,7 @@ func SetupLogger(conf *config.Config) {
 func loggerHandlerOptions(conf *config.Config) *slog.HandlerOptions {
 	return &slog.HandlerOptions{
 		Level: parseLevel(conf.LogLevel),
-		AddSource: true,
+		// AddSource: true,
 		ReplaceAttr: func(_ []string, a slog.Attr) slog.Attr {
 			if a.Key == slog.TimeKey && a.Value.Kind() == slog.KindTime {
 				return slog.String(slog.TimeKey, a.Value.Time().Format(logTimeFormat))

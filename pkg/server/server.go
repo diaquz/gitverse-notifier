@@ -80,26 +80,27 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 	eventTypeName := ginCtx.Request.Header.Get("X-Gitverse-Event-Type")
 	requestId := ginCtx.GetHeader("X-Gitverse-Delivery")
 
+	if requestId != "" {
+		ctx = logger.With(ctx, "request-id", requestId)
+	}
+
 	event, err := parsers.ParseEvent(ctx, eventName, eventTypeName, requestId, body)
 	if err != nil {
-		logger.Error(ctx, "failed to parse gitverse event", "err", err,
-			"headers", ginCtx.Request.Header, "body", string(body))
+		logger.Error(ctx, "failed to parse gitverse event", 
+			"event-name", eventName, "event-type", eventTypeName,
+			"err", err, "headers", ginCtx.Request.Header, "body", string(body))
+
 		ginCtx.Status(http.StatusBadRequest)
 		return
 	}
 
-	if event.RequestId != "" {
-		ctx = logger.With(ctx, "request-id", event.RequestId)
-	}
-
 	if s.logAllRequests {
-		logger.Info(ctx, "gitverse event received",
-			"headers", ginCtx.Request.Header, "body", string(body))
+		logger.Info(ctx, "gitverse event received", "event", event.Type, "body", string(body))
 	}
 
 	if err := s.pipeline.Enqueue(ctx, &event); err != nil {
-		logger.Error(ctx, "failed to accept event", "err", err,
-			"event", event.Type, "repository", event.Repository)
+		logger.Error(ctx, "failed to enqueue event",
+			"err", err, "event", event.Type, "repository", event.Repository)
 		ginCtx.Status(http.StatusInternalServerError)
 		return
 	}
@@ -110,7 +111,7 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 func readRequestBody(ctx context.Context, ginCtx *gin.Context) (body []byte, ok bool) {
 	body, err := io.ReadAll(ginCtx.Request.Body)
 	if err != nil {
-		logger.Error(ctx, "failed to read request body", "err", err)
+		logger.Error(ctx, "failed to read request body", "headers", ginCtx.Request.Header, "err", err)
 		return
 	}
 
