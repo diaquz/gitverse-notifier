@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -15,11 +16,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const maxEventBody = 1 << 20
+
 type HttpServer struct {
 	addr           string
 	pipeline       *pipeline.Pipeline
 	accounts       gin.Accounts
 	logAllRequests bool
+	server         *http.Server
 }
 
 func NewHttpServer(pipeline *pipeline.Pipeline) *HttpServer {
@@ -36,9 +40,31 @@ func NewHttpServer(pipeline *pipeline.Pipeline) *HttpServer {
 }
 
 func (s *HttpServer) Run() error {
-	eng := s.registerRouter()
+	if s.server != nil {
+		return fmt.Errorf("server already running")
+	}
 
-	return http.ListenAndServe(s.addr, eng)
+	eng := s.registerRouter()
+	s.server = &http.Server{Addr: s.addr, Handler: eng}
+	defer s.clearServer()
+
+	if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return err
+	}
+
+	return nil
+}
+
+func (s *HttpServer) Shutdown(ctx context.Context) error {
+	if s.server == nil {
+		return fmt.Errorf("no running http server")
+	}
+
+	return s.server.Shutdown(ctx)
+}
+
+func (s *HttpServer) clearServer() {
+	s.server = nil
 }
 
 func (s *HttpServer) registerRouter() *gin.Engine {
@@ -50,10 +76,19 @@ func (s *HttpServer) registerRouter() *gin.Engine {
 	eng.Use(gin.Recovery())
 	eng.Use(gin.Logger())
 
+	s.registerUtilRoutes(eng)
 	s.registerGitverseRouterGroup(eng)
 	s.registerPprof(eng)
 
 	return eng
+}
+
+func (s *HttpServer) registerUtilRoutes(eng *gin.Engine) {
+	group := eng.Group("/")
+
+	{
+		group.GET("/health", s.health)
+	}
 }
 
 func (s *HttpServer) registerGitverseRouterGroup(eng *gin.Engine) {
@@ -61,7 +96,6 @@ func (s *HttpServer) registerGitverseRouterGroup(eng *gin.Engine) {
 
 	{
 		group.Use(gin.BasicAuth(s.accounts))
-		group.GET("/health", s.health)
 		group.POST("/event", s.handleEvent)
 	}
 }
@@ -137,6 +171,7 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 }
 
 func readRequestBody(ctx context.Context, ginCtx *gin.Context) (body []byte, ok bool) {
+	ginCtx.Request.Body = http.MaxBytesReader(ginCtx.Writer, ginCtx.Request.Body, maxEventBody)
 	body, err := io.ReadAll(ginCtx.Request.Body)
 	if err != nil {
 		logger.Error(ctx, "failed to read request body", "headers", ginCtx.Request.Header, "err", err)

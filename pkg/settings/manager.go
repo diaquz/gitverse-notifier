@@ -95,7 +95,7 @@ func SetupSettingsManager() (*SettingsManager, error) {
 			"action", "settings_setup",
 			"name", name,
 			"repository", settings.Repository,
-			"actions", manager.defaultSetting.RenderActionsCodes())
+			"actions", settings.RenderActionsCodes())
 	}
 
 	if !defaultSettingsInitialized {

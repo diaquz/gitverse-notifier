@@ -75,15 +75,6 @@ func (m *InMemoryBatchesManager) TryProcessBucket(ctx context.Context, key strin
 	return m.applyStrategy(b), true
 }
 
-func (m *InMemoryBatchesManager) ProcessBucket(ctx context.Context, key string) ([]*events.Event, bool) {
-	if b, ok := m.buckets[key]; ok {
-		logger.Debug(ctx, "processing batch", "key", key, "strategy", b.strategy)
-		return m.applyStrategy(b), true
-	}
-
-	return nil, false
-}
-
 func (m *InMemoryBatchesManager) PopExpired(ctx context.Context, now time.Time) []*events.Event {
 	defer m.mu.Unlock()
 	m.mu.Lock()
@@ -100,6 +91,20 @@ func (m *InMemoryBatchesManager) PopExpired(ctx context.Context, now time.Time) 
 		delete(m.buckets, key)
 		out = append(out, m.applyStrategy(b)...)
 	}
+
+	return out
+}
+
+func (m *InMemoryBatchesManager) PopAll(ctx context.Context) []*events.Event {
+	defer m.mu.Unlock()
+	m.mu.Lock()
+
+	out := make([]*events.Event, 0, len(m.buckets))
+	for key, b := range m.buckets {
+		logger.Debug(ctx, "flushing batch on shutdown", "key", key, "strategy", b.strategy, "size", len(b.events))
+		out = append(out, m.applyStrategy(b)...)
+	}
+	m.buckets = make(map[string]*bucket)
 
 	return out
 }

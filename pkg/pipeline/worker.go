@@ -11,15 +11,19 @@ import (
 const batchExpireCheckInterval = time.Second
 
 func (p *Pipeline) StartWorkers(ctx context.Context) {
+	p.wg.Add(1)
 	go p.startBatchesChecker(ctx)
 
 	for i := 0; i < config.GlobalConfig.EventWorkerCount; i++ {
 		logger.Debug(ctx, "starting queue worker", "worker", i)
+		p.wg.Add(1)
 		go p.startWorker(ctx, i)
 	}
 }
 
 func (p *Pipeline) startBatchesChecker(ctx context.Context) {
+	defer p.wg.Done()
+
 	ticker := time.NewTicker(batchExpireCheckInterval)
 	defer ticker.Stop()
 
@@ -42,32 +46,25 @@ func (p *Pipeline) startBatchesChecker(ctx context.Context) {
 }
 
 func (p *Pipeline) startWorker(ctx context.Context, id int) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case event, ok := <-p.queue.Events():
-			if !ok {
-				return
-			}
+	defer p.wg.Done()
+	baseCtx := context.WithoutCancel(ctx)
 
-			start := time.Now()
-			// Все логи будут содержать request-id, полученный из gitverse delivery заголовка
-			eventCtx := ctx
-			if event.RequestId != "" {
-				eventCtx = logger.With(ctx, "request-id", event.RequestId)
-			}
-	
-			if err := p.Run(eventCtx, event); err != nil {
-				logger.Error(eventCtx, "queue worker failed to process event",
-					"time", time.Since(start).Milliseconds(),
-					"worker", id, "event", event.Type, "repository", event.Repository, "err", err)
-				continue
-			}
-
-			logger.Info(eventCtx, "queue worker processed event",
-				"time", time.Since(start).Milliseconds(),
-				"worker", id, "event", event.Type, "repository", event.Repository)
+	for event := range p.queue.Events() {
+		start := time.Now()
+		eventCtx := baseCtx
+		if event.RequestId != "" {
+			eventCtx = logger.With(baseCtx, "request-id", event.RequestId)
 		}
+
+		if err := p.Run(eventCtx, event); err != nil {
+			logger.Error(eventCtx, "queue worker failed to process event",
+				"time", time.Since(start).Milliseconds(),
+				"worker", id, "event", event.Type, "repository", event.Repository, "err", err)
+			continue
+		}
+
+		logger.Info(eventCtx, "queue worker processed event",
+			"time", time.Since(start).Milliseconds(),
+			"worker", id, "event", event.Type, "repository", event.Repository)
 	}
 }

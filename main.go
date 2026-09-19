@@ -3,11 +3,15 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"gitverse-notifier/pkg/cache"
 	"gitverse-notifier/pkg/config"
-	"gitverse-notifier/pkg/dispath"
-	"gitverse-notifier/pkg/dispath/handlers"
+	"gitverse-notifier/pkg/dispatch"
+	"gitverse-notifier/pkg/dispatch/handlers"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/enrichers"
 	"gitverse-notifier/pkg/integrations/gitverse"
@@ -33,8 +37,34 @@ func main() {
 	flag.Parse()
 	config.Setup(configPath)
 	logger.SetupLogger(config.GlobalConfig)
-	ctx := context.Background()
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	p := buildEventPipeline(ctx)
+	p.StartWorkers(ctx)
+
+	s := server.NewHttpServer(p)
+	go runHttpServer(ctx, s)
+
+	<-ctx.Done()
+	logger.Info(ctx, "shutdown signal received")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	if err := s.Shutdown(shutdownCtx); err != nil {
+		logger.Error(shutdownCtx, "http server shutdown failed", "err", err)
+	}
+
+	if err := p.Close(shutdownCtx); err != nil {
+		logger.Error(shutdownCtx, "pipeline shutdown failed", "err", err)
+	}
+
+	logger.Info(shutdownCtx, "shutdown complete")
+}
+
+func buildEventPipeline(ctx context.Context) *pipeline.Pipeline {
 	manager, err := settings.SetupSettingsManager()
 	if err != nil {
 		logger.Fatal(ctx, err)
@@ -55,7 +85,7 @@ func main() {
 		logger.Error(ctx, "failed to configure telegram client", "err", tgErr)
 	}
 
-	dispatcher := dispath.NewDispatcher(
+	dispatcher := dispatch.NewDispatcher(
 		manager,
 		handlers.NewJiraCommentIssue(jiraClient, engine),
 		handlers.NewTelegramNotify(tgClient, engine),
@@ -78,14 +108,15 @@ func main() {
 	eventEnrichers = append(eventEnrichers, enrichers.NewGitverseLinks(manager))
 	eventEnrichers = append(eventEnrichers, enrichers.NewTelegramLinks(manager))
 
-	pipeline := pipeline.BuildNewPipeline(
+	return pipeline.BuildNewPipeline(
 		manager,
 		eventEnrichers,
 		dispatcher,
 	)
+}
 
-	pipeline.StartWorkers(ctx)
-
-	srv := server.NewHttpServer(pipeline)
-	logger.Fatal(ctx, srv.Run())
+func runHttpServer(ctx context.Context, s *server.HttpServer) {
+	if err := s.Run(); err != nil {
+		logger.Fatal(ctx, err)
+	}
 }
