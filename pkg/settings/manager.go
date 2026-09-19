@@ -49,6 +49,7 @@ func (m *SettingsManager) SettingsByRepository(repository string) *RepositorySet
 	return &m.defaultSetting
 }
 
+
 func SetupSettingsManager() (*SettingsManager, error) {
 	settingsDir := config.GlobalConfig.RepositoriesDirPath
 	entries, err := os.ReadDir(settingsDir)
@@ -117,10 +118,6 @@ func loadRepositorySettings(path string) (*RepositorySettings, error) {
 
 	if settings.Repository == "" {
 		return nil, fmt.Errorf("repository name is required in %s", path)
-	}
-
-	if settings.Url == "" {
-		settings.Url = config.GlobalConfig.GitverseBaseURL
 	}
 
 	for i, code := range settings.AllowedJiraProjects {

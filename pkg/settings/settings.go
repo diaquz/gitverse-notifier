@@ -24,7 +24,6 @@ func (b *BatchSetting) TTLTime() time.Duration {
 // RepositorySettings хранит настройки конкретного репозитория
 type RepositorySettings struct {
 	Repository          string            `yaml:"repository"`
-	Url                 string            `yaml:"url"`
 	AllowedJiraProjects []string          `yaml:"allowed_jira_projects"`
 	Actions             []ActionRule      `yaml:"action_rules"`
 	Batches             []BatchSetting    `yaml:"event_batches"`

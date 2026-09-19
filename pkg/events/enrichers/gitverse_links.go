@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/settings"
 )
@@ -27,10 +28,7 @@ func (e *GitverseLinks) Skip(event *events.Event) bool {
 }
 
 func (e *GitverseLinks) Enrich(_ context.Context, event *events.Event) error {
-	baseURL := e.baseURLFor(event.Repository)
-	if baseURL == "" {
-		return nil
-	}
+	baseURL := config.GlobalConfig.GitverseBaseURL
 
 	e.addUserURL(baseURL, &event.Sender)
 	e.addUserURL(baseURL, &event.PullRequest.Author)
@@ -52,12 +50,6 @@ func (e *GitverseLinks) Enrich(_ context.Context, event *events.Event) error {
 	}
 
 	return nil
-}
-
-func (e *GitverseLinks) baseURLFor(repository string) string {
-	settings := e.manager.SettingsByRepository(repository)
-
-	return strings.TrimRight(settings.Url, "/")
 }
 
 func (e *GitverseLinks) addUserURL(baseURL string, actor *events.Actor) {

@@ -216,27 +216,10 @@ action_rules:
 		require.NotNil(t, got)
 
 		assert.Equal(t, "org/app", got.Repository)
-		assert.Equal(t, "https://gitverse.example", got.Url)
 		assert.Equal(t, []string{"APP", "JIRA"}, got.AllowedJiraProjects)
 		require.Len(t, got.Actions, 1)
 		assert.Equal(t, events.PullRequestOpened, got.Actions[0].On)
 		assert.Equal(t, "telegram.notify", got.Actions[0].Action)
-	})
-
-	t.Run("keeps explicit url", func(t *testing.T) {
-		dir := t.TempDir()
-		path := filepath.Join(dir, "app.yml")
-		content := `
-repository: org/app
-url: https://custom.example/org/app
-allowed_jira_projects: []
-action_rules: []
-`
-		require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
-
-		got, err := loadRepositorySettings(path)
-		require.NoError(t, err)
-		assert.Equal(t, "https://custom.example/org/app", got.Url)
 	})
 
 	t.Run("requires repository name", func(t *testing.T) {
