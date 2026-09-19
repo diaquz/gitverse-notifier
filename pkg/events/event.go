@@ -67,6 +67,7 @@ type StatusInfo struct {
 }
 
 type Event struct {
+	RequestId     string
 	Type          EventType
 	Action        string
 	Ref           string

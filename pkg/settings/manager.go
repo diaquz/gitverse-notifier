@@ -138,7 +138,7 @@ func loadRepositorySettings(path string) (*RepositorySettings, error) {
 	for i := range settings.Batches {
 		eventType, ok := events.ParseEventType(settings.Batches[i].EventRaw)
 		if !ok {
-			return nil, fmt.Errorf("action for unknown event '%s' in %q", settings.Actions[i].OnCode, path)
+			return nil, fmt.Errorf("batch for unknown event '%s' in %q", settings.Batches[i].EventRaw, path)
 		}
 		settings.Batches[i].Event = eventType
 	}

@@ -69,7 +69,7 @@ func (s *HttpServer) health(ctx *gin.Context) {
 }
 
 func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
-	ctx := ctxWithRequestId(ginCtx)
+	ctx := ginCtx.Request.Context()
 	body, ok := readRequestBody(ctx, ginCtx)
 	if !ok {
 		ginCtx.Status(http.StatusBadRequest)
@@ -78,12 +78,18 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 
 	eventName := ginCtx.Request.Header.Get("X-Gitverse-Event")
 	eventTypeName := ginCtx.Request.Header.Get("X-Gitverse-Event-Type")
-	event, err := parsers.ParseEvent(ctx, eventName, eventTypeName, body)
+	requestId := ginCtx.GetHeader("X-Gitverse-Delivery")
+
+	event, err := parsers.ParseEvent(ctx, eventName, eventTypeName, requestId, body)
 	if err != nil {
 		logger.Error(ctx, "failed to parse gitverse event", "err", err,
 			"headers", ginCtx.Request.Header, "body", string(body))
 		ginCtx.Status(http.StatusBadRequest)
 		return
+	}
+
+	if event.RequestId != "" {
+		ctx = logger.With(ctx, "request-id", event.RequestId)
 	}
 
 	if s.logAllRequests {
@@ -99,15 +105,6 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 	}
 
 	ginCtx.Status(http.StatusOK)
-}
-
-func ctxWithRequestId(ginCtx *gin.Context) (ctx context.Context) {
-	ctx = context.WithoutCancel(ginCtx.Request.Context())
-	if delivery := ginCtx.GetHeader("X-Gitverse-Delivery"); delivery != "" {
-		ctx = logger.With(ctx, "request-id", delivery)
-	}
-
-	return
 }
 
 func readRequestBody(ctx context.Context, ginCtx *gin.Context) (body []byte, ok bool) {

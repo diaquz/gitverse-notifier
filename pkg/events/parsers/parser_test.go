@@ -41,7 +41,7 @@ func TestParseEvent_PullRequestOpened(t *testing.T) {
 		},
 	})
 
-	event, err := ParseEvent(context.Background(), "pull_request", "pull_request", body)
+	event, err := ParseEvent(context.Background(), "pull_request", "pull_request", "123", body)
 	require.NoError(t, err)
 
 	assert.Equal(t, events.PullRequestOpened, event.Type)
@@ -75,7 +75,7 @@ func TestParseEvent_PullRequestReviewComment(t *testing.T) {
 		},
 	})
 
-	event, err := ParseEvent(context.Background(), "pull_request_comment", "pull_request_review_comment", body)
+	event, err := ParseEvent(context.Background(), "pull_request_comment", "pull_request_review_comment", "123", body)
 	require.NoError(t, err)
 
 	assert.Equal(t, events.PullRequestReviewComment, event.Type)
@@ -98,7 +98,7 @@ func TestParseEvent_PullRequestReviewComment_EmptyContentStillSetsComment(t *tes
 		},
 	})
 
-	event, err := ParseEvent(context.Background(), "pull_request_comment", "pull_request_review_comment", body)
+	event, err := ParseEvent(context.Background(), "pull_request_comment", "pull_request_review_comment", "123", body)
 	require.NoError(t, err)
 	assert.Equal(t, events.PullRequestReviewComment, event.Type)
 	assert.Equal(t, "", event.Comment.Body)
@@ -122,7 +122,7 @@ func TestParseEvent_IssueComment(t *testing.T) {
 		},
 	})
 
-	event, err := ParseEvent(context.Background(), "issue_comment", "pull_request_comment", body)
+	event, err := ParseEvent(context.Background(), "issue_comment", "pull_request_comment", "123", body)
 	require.NoError(t, err)
 
 	assert.Equal(t, events.PullRequestComment, event.Type)
@@ -141,7 +141,7 @@ func TestParseEvent_IssueComment_FallsBackToSenderAuthor(t *testing.T) {
 		},
 	})
 
-	event, err := ParseEvent(context.Background(), "issue_comment", "pull_request_comment", body)
+	event, err := ParseEvent(context.Background(), "issue_comment", "pull_request_comment", "123", body)
 	require.NoError(t, err)
 	assert.Equal(t, "carol", event.Comment.Author.Name)
 	assert.Empty(t, event.PullRequest.Title)
@@ -161,7 +161,7 @@ func TestParseEvent_BranchPush(t *testing.T) {
 		},
 	})
 
-	event, err := ParseEvent(context.Background(), "push", "push", body)
+	event, err := ParseEvent(context.Background(), "push", "push", "123", body)
 	require.NoError(t, err)
 
 	assert.Equal(t, events.BranchPush, event.Type)
@@ -179,7 +179,7 @@ func TestParseEvent_BranchCreatedAndDeleted(t *testing.T) {
 		},
 		"sender": map[string]any{"name": "erin"},
 	})
-	created, err := ParseEvent(context.Background(), "create", "create", createdBody)
+	created, err := ParseEvent(context.Background(), "create", "create", "123", createdBody)
 	require.NoError(t, err)
 	assert.Equal(t, events.BranchCreated, created.Type)
 	assert.Equal(t, "feature", created.Branch)
@@ -191,7 +191,7 @@ func TestParseEvent_BranchCreatedAndDeleted(t *testing.T) {
 		},
 		"sender": map[string]any{"name": "frank"},
 	})
-	deleted, err := ParseEvent(context.Background(), "delete", "delete", deletedBody)
+	deleted, err := ParseEvent(context.Background(), "delete", "delete", "123", deletedBody)
 	require.NoError(t, err)
 	assert.Equal(t, events.BranchDeleted, deleted.Type)
 	assert.Equal(t, "old", deleted.Branch)
@@ -209,7 +209,7 @@ func TestParseEvent_CICDStatus(t *testing.T) {
 		"sender": map[string]any{"name": "bot"},
 	})
 
-	event, err := ParseEvent(context.Background(), "status", "status", body)
+	event, err := ParseEvent(context.Background(), "status", "status", "123", body)
 	require.NoError(t, err)
 
 	assert.Equal(t, events.CICDStatus, event.Type)
@@ -237,7 +237,7 @@ func TestParseEvent_PullRequestAuthorFallsBackToSender(t *testing.T) {
 		},
 	})
 
-	event, err := ParseEvent(context.Background(), "pull_request", "pull_request", body)
+	event, err := ParseEvent(context.Background(), "pull_request", "pull_request", "123", body)
 	require.NoError(t, err)
 	assert.Equal(t, events.PullRequestClosed, event.Type)
 	assert.Equal(t, "alice", event.PullRequest.Author.Name)
@@ -267,7 +267,7 @@ func TestParseEvent_UsesActionFromBodyForTypeResolution(t *testing.T) {
 				},
 			})
 
-			event, err := ParseEvent(context.Background(), "pull_request", "pull_request", body)
+			event, err := ParseEvent(context.Background(), "pull_request", "pull_request", "123", body)
 			require.NoError(t, err)
 			assert.Equal(t, tc.want, event.Type)
 		})
@@ -276,7 +276,7 @@ func TestParseEvent_UsesActionFromBodyForTypeResolution(t *testing.T) {
 
 func TestParseEvent_Errors(t *testing.T) {
 	t.Run("invalid common json", func(t *testing.T) {
-		_, err := ParseEvent(context.Background(), "push", "push", []byte("{"))
+		_, err := ParseEvent(context.Background(), "push", "push", "123", []byte("{"))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to parse event json")
 	})
@@ -285,38 +285,35 @@ func TestParseEvent_Errors(t *testing.T) {
 		body := mustJSON(t, map[string]any{
 			"repository": map[string]any{"fullName": "org/app"},
 		})
-		_, err := ParseEvent(context.Background(), "weird", "event", body)
+		_, err := ParseEvent(context.Background(), "weird", "event", "123", body)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to detect event type")
 	})
 
 	t.Run("invalid pull request json after type resolve", func(t *testing.T) {
-		// Valid JSON for common fields, but nested types that break PR unmarshal
-		// are hard because common and PR both use json.Unmarshal on same body.
-		// Use a body that parses as common but fails as PR via wrong types.
 		body := []byte(`{"action":"opened","repository":{"fullName":"org/app"},"number":"not-int"}`)
-		_, err := ParseEvent(context.Background(), "pull_request", "pull_request", body)
+		_, err := ParseEvent(context.Background(), "pull_request", "pull_request", "123", body)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to parse pull request json")
 	})
 
 	t.Run("invalid issue comment json", func(t *testing.T) {
 		body := []byte(`{"repository":{"fullName":"org/app"},"isPull":"nope"}`)
-		_, err := ParseEvent(context.Background(), "issue_comment", "pull_request_comment", body)
+		_, err := ParseEvent(context.Background(), "issue_comment", "pull_request_comment", "123", body)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to parse issue comment json")
 	})
 
 	t.Run("invalid push json", func(t *testing.T) {
 		body := []byte(`{"repository":{"fullName":"org/app"},"totalCommits":"x"}`)
-		_, err := ParseEvent(context.Background(), "push", "push", body)
+		_, err := ParseEvent(context.Background(), "push", "push", "123", body)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to parse push/ref json")
 	})
 
 	t.Run("invalid status json", func(t *testing.T) {
 		body := []byte(`{"repository":{"fullName":"org/app"},"state":{"nested":true}}`)
-		_, err := ParseEvent(context.Background(), "status", "status", body)
+		_, err := ParseEvent(context.Background(), "status", "status", "123", body)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to parse status json")
 	})
@@ -324,7 +321,7 @@ func TestParseEvent_Errors(t *testing.T) {
 
 func TestParseEvent_EmptyBodyFailsOnTypedPayload(t *testing.T) {
 	// fillCommon accepts an empty body, but type-specific fillers still require JSON.
-	_, err := ParseEvent(context.Background(), "push", "push", nil)
+	_, err := ParseEvent(context.Background(), "push", "push", "123", nil)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to parse push/ref json")
 }
@@ -339,7 +336,7 @@ func TestParseEvent_ReviewApprovedAndRejected(t *testing.T) {
 			"state": "open",
 		},
 	})
-	approved, err := ParseEvent(context.Background(), "pull_request_approved", "pull_request_review_approved", approvedBody)
+	approved, err := ParseEvent(context.Background(), "pull_request_approved", "pull_request_review_approved", "123", approvedBody)
 	require.NoError(t, err)
 	assert.Equal(t, events.PullRequestReviewApproved, approved.Type)
 
@@ -352,7 +349,7 @@ func TestParseEvent_ReviewApprovedAndRejected(t *testing.T) {
 			"state": "open",
 		},
 	})
-	rejected, err := ParseEvent(context.Background(), "pull_request_rejected", "pull_request_review_rejected", rejectedBody)
+	rejected, err := ParseEvent(context.Background(), "pull_request_rejected", "pull_request_review_rejected", "123", rejectedBody)
 	require.NoError(t, err)
 	assert.Equal(t, events.PullRequestReviewRejected, rejected.Type)
 }

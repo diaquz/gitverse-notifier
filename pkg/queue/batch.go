@@ -2,25 +2,19 @@ package queue
 
 import (
 	"fmt"
+	"sync"
+	"time"
+
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/queue/batches"
 	"gitverse-notifier/pkg/settings"
-	"sync"
-	"time"
-)
-
-type BatchGroupType string
-type BatchStrategyType string
-
-const (
-	GroupByPR    BatchGroupType    = "batch.pull_request"
-	UseLastEvent BatchStrategyType = "batch.use_last_event"
 )
 
 type BatchesManager interface {
 	Add(event *events.Event) (string, bool)
 	TryProcessBucket(key string) ([]*events.Event, bool)
 	ProcessBucket(key string) ([]*events.Event, bool)
+	PopExpired(now time.Time) []*events.Event
 }
 
 type InMemoryBatchesManager struct {
@@ -32,33 +26,32 @@ type InMemoryBatchesManager struct {
 }
 
 type bucket struct {
-	key string
-	events   []*events.Event
-	timer    *time.Timer
-	flushing bool
-	timeout  int
-	size     int
-	strategy string
+	key       string
+	events    []*events.Event
+	expiresAt time.Time
+	size      int
+	strategy  string
 }
 
 func NewInMemoryBatchesManager(settingsManager *settings.SettingsManager) *InMemoryBatchesManager {
-	manager := &InMemoryBatchesManager{
+	prGroup := batches.PullRequestBatch{}
+	useLast := batches.UseLastEvent{}
+
+	return &InMemoryBatchesManager{
 		settingsManager: settingsManager,
-		buckets:         make(map[string]*bucket, 0),
+		buckets:         make(map[string]*bucket),
 		groupTypes: map[string]batches.GroupType{
-			string(GroupByPR): batches.PullRequestBatch{},
+			prGroup.Name(): prGroup,
 		},
 		strategies: map[string]batches.Strategy{
-			string(UseLastEvent): batches.UseLastEvent{},
+			useLast.Name(): useLast,
 		},
 	}
-
-	return manager
 }
 
 func (m *InMemoryBatchesManager) Add(event *events.Event) (key string, ok bool) {
-	settings := m.settingsManager.SettingsByRepository(event.Repository)
-	batchSettings := settings.FindBatchSettings(event)
+	repoSettings := m.settingsManager.SettingsByRepository(event.Repository)
+	batchSettings := repoSettings.FindBatchSettings(event)
 	if batchSettings == nil {
 		return
 	}
@@ -68,29 +61,47 @@ func (m *InMemoryBatchesManager) Add(event *events.Event) (key string, ok bool) 
 		return
 	}
 
-	bucket := m.addToBucket(groupType.Key(event), batchSettings, event)
-	return bucket.key, true
+	b := m.addToBucket(groupType.Key(event), batchSettings, event)
+	return b.key, true
 }
 
 func (m *InMemoryBatchesManager) TryProcessBucket(key string) ([]*events.Event, bool) {
-	if _, ok := m.buckets[key]; ok {
-		return m.ProcessBucket(key)
+	defer m.mu.Unlock()
+	m.mu.Lock()
+
+	b, ok := m.buckets[key]
+	if !ok || len(b.events) < b.size {
+		return nil, false
+	}
+
+	delete(m.buckets, key)
+	return m.applyStrategy(b), true
+}
+
+func (m *InMemoryBatchesManager) ProcessBucket(key string) ([]*events.Event, bool) {
+	if b, ok := m.buckets[key]; ok {
+		return m.applyStrategy(b), true
 	}
 
 	return nil, false
 }
 
-func (m *InMemoryBatchesManager) ProcessBucket(key string) ([]*events.Event, bool) {
-	bucket := m.popBucket(key)
-	if bucket == nil {
-		return nil, false
+func (m *InMemoryBatchesManager) PopExpired(now time.Time) []*events.Event {
+	defer m.mu.Unlock()
+	m.mu.Lock()
+
+	out := make([]*events.Event, 0)
+
+	for key, b := range m.buckets {
+		if b.expiresAt.IsZero() || now.Before(b.expiresAt) {
+			continue
+		}
+
+		out = append(out, m.applyStrategy(b)...)
+		delete(m.buckets, key)
 	}
 
-	if strategy, ok := m.strategies[bucket.strategy]; ok {
-		return strategy.Apply(bucket.events), true
-	}
-
-	return nil, false
+	return out
 }
 
 func (m *InMemoryBatchesManager) addToBucket(key string, batchSettings *settings.BatchSetting, event *events.Event) *bucket {
@@ -101,28 +112,22 @@ func (m *InMemoryBatchesManager) addToBucket(key string, batchSettings *settings
 	b, ok := m.buckets[key]
 	if !ok {
 		b = &bucket{
-			key: key,
-			timeout:  batchSettings.Timeout,
-			size:     batchSettings.Size,
-			strategy: batchSettings.Strategy,
+			key:       key,
+			expiresAt: time.Now().Add(batchSettings.TTLTime()),
+			size:      batchSettings.Size,
+			strategy:  batchSettings.Strategy,
 		}
 		m.buckets[key] = b
 	}
 
 	b.events = append(b.events, event)
-
 	return b
 }
 
-func (m *InMemoryBatchesManager) popBucket(key string) *bucket {
-	defer m.mu.Unlock()
-	m.mu.Lock()
-
-	bucket, ok := m.buckets[key]
-	if !ok {
-		return nil
+func (m *InMemoryBatchesManager) applyStrategy(b *bucket) []*events.Event {
+	if strategy, ok := m.strategies[b.strategy]; ok {
+		return strategy.Apply(b.events)
 	}
 
-	delete(m.buckets, key)
-	return bucket
+	return b.events
 }

@@ -11,25 +11,25 @@ import (
 )
 
 type Pipeline struct {
-	manager   *settings.SettingsManager
-	enrichers []events.Enricher
-	dispatcher *dispath.Dispatcher
-	queue     queue.EventQueue
-	batches   queue.BatchesManager
+	manager    *settings.SettingsManager
+	enrichers  []events.Enricher
+	dispatcher dispath.EventDispather
+	queue      queue.EventQueue
+	batches    queue.BatchesManager
 }
 
 func BuildNewPipeline(
 	manager *settings.SettingsManager,
 	enrichers []events.Enricher,
-	dispatcher *dispath.Dispatcher,
+	dispatcher dispath.EventDispather,
 ) *Pipeline {
 	cfg := config.GlobalConfig
 
 	return &Pipeline{
-		queue:     queue.NewMemoryQueue(cfg.EventQueueSize),
-		batches:   queue.NewInMemoryBatchesManager(manager),
-		enrichers: enrichers,
-		manager:   manager,
+		queue:      queue.NewMemoryQueue(cfg.EventQueueSize),
+		batches:    queue.NewInMemoryBatchesManager(manager),
+		enrichers:  enrichers,
+		manager:    manager,
 		dispatcher: dispatcher,
 	}
 }
@@ -43,8 +43,9 @@ func (p *Pipeline) Enqueue(ctx context.Context, event *events.Event) error {
 
 	if events, ok := p.batches.TryProcessBucket(key); ok {
 		for _, event := range events {
-			p.queue.Enqueue(ctx, event)
-			// TODO: Log error
+			if err := p.queue.Enqueue(ctx, event); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -52,9 +53,8 @@ func (p *Pipeline) Enqueue(ctx context.Context, event *events.Event) error {
 }
 
 func (p *Pipeline) Run(ctx context.Context, event *events.Event) error {
-	setting := p.manager.SettingsByRepository(event.Repository)
-	// Пропускаем события, для которых гарантированно нет событий, чтобы лишни раз не делать запросы к gitverse API
-	if !setting.HasPotentialActions(event) {
+	// Пропускаем события, для которых гарантированно нет событий, чтобы лишний раз не делать запросы к gitverse API
+	if !p.dispatcher.Dispathable(event) {
 		logger.Info(ctx, "no potential actions, skipping",
 			"event", event.Type, "repository", event.Repository, "action", "pipeline_run")
 		return nil

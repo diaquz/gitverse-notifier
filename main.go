@@ -67,16 +67,16 @@ func main() {
 		logger.Error(ctx, "failed to configure gitverse client", "err", gitverseErr)
 	}
 
-	eventEnrichers := []events.Enricher{
-		enrichers.NewJiraIssueKeys(manager),
-		enrichers.NewGitverseLinks(manager),
-		enrichers.NewTelegramLinks(manager),
-	}
+	eventEnrichers := make([]events.Enricher, 0, 5)
 	if gitverseClient != nil {
 		queries := gvqueries.New(gitverseClient, cache.NewMemoryPullRequestCache())
 		eventEnrichers = append(eventEnrichers, enrichers.NewGitversePullRequest(queries))
 		eventEnrichers = append(eventEnrichers, enrichers.NewGitverseCommit(queries))
 	}
+
+	eventEnrichers = append(eventEnrichers, enrichers.NewJiraIssueKeys(manager))
+	eventEnrichers = append(eventEnrichers, enrichers.NewGitverseLinks(manager))
+	eventEnrichers = append(eventEnrichers, enrichers.NewTelegramLinks(manager))
 
 	pipeline := pipeline.BuildNewPipeline(
 		manager,
@@ -84,7 +84,7 @@ func main() {
 		dispatcher,
 	)
 
-	pipeline.StartWorkers(ctx, config.GlobalConfig.EventWorkerCount)
+	pipeline.StartWorkers(ctx)
 
 	srv := server.NewHttpServer(pipeline)
 	logger.Fatal(ctx, srv.Run())

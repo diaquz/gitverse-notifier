@@ -4,16 +4,21 @@ import (
 	"fmt"
 	"gitverse-notifier/pkg/events"
 	"strings"
+	"time"
 )
 
 type BatchSetting struct {
 	Key      string           `yaml:"key"`
 	GroupBy  string           `yaml:"group_by"`
-	Strategy string           `yaml:"use_last_event"`
+	Strategy string           `yaml:"strategy"`
 	EventRaw string           `yaml:"event"`
 	Event    events.EventType `yaml:"-"`
 	Size     int              `yaml:"size"`
-	Timeout  int              `yaml:"timeout"`
+	TTL      int              `yaml:"ttl"`
+}
+
+func (b *BatchSetting) TTLTime() time.Duration {
+	return time.Duration(b.TTL) * time.Second
 }
 
 // RepositorySettings хранит настройки конкретного репозитория

@@ -19,7 +19,7 @@ event_batches:
     strategy: use_last_event
     event: pull_request.review_requested
     size: 5
-    timeout: 60
+    ttl: 60
 
 action_rules:
   - on: pull_request.opened
