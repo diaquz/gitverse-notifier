@@ -51,19 +51,23 @@ func (p *Pipeline) startWorker(ctx context.Context, id int) {
 				return
 			}
 
+			start := time.Now()
 			// Все логи будут содержать request-id, полученный из gitverse delivery заголовка
 			eventCtx := ctx
 			if event.RequestId != "" {
 				eventCtx = logger.With(ctx, "request-id", event.RequestId)
 			}
-
-			logger.Debug(eventCtx, "queue worker processing event",
-				"worker", id, "event", event.Type, "repository", event.Repository)
-
+	
 			if err := p.Run(eventCtx, event); err != nil {
-				logger.Error(eventCtx, "pipeline run failed",
+				logger.Error(eventCtx, "queue worker failed to process event",
+					"time", time.Since(start).Milliseconds(),
 					"worker", id, "event", event.Type, "repository", event.Repository, "err", err)
+				continue
 			}
+
+			logger.Info(eventCtx, "queue worker processed event",
+				"time", time.Since(start).Milliseconds(),
+				"worker", id, "event", event.Type, "repository", event.Repository)
 		}
 	}
 }

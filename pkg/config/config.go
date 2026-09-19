@@ -54,7 +54,9 @@ type Config struct {
 	CacheTTL int `mapstructure:"CACHE_TTL"`
 
 	EventQueueSize   int `mapstructure:"EVENT_QUEUE_SIZE"`
-	EventWorkerCount int  `mapstructure:"EVENT_WORKER_COUNT"`
+	EventWorkerCount int `mapstructure:"EVENT_WORKER_COUNT"`
+
+	EnablePprof bool `mapstructure:"ENABLE_PPROF"`
 }
 
 func Setup(configPath string) {
@@ -99,6 +101,7 @@ func getDefaultConfig() Config {
 		CacheTTL:            60,
 		EventQueueSize:      256,
 		EventWorkerCount:    5,
+		EnablePprof:         false,
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/http/pprof"
 
 	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/events/parsers"
@@ -50,6 +51,7 @@ func (s *HttpServer) registerRouter() *gin.Engine {
 	eng.Use(gin.Logger())
 
 	s.registerGitverseRouterGroup(eng)
+	s.registerPprof(eng)
 
 	return eng
 }
@@ -61,6 +63,32 @@ func (s *HttpServer) registerGitverseRouterGroup(eng *gin.Engine) {
 		group.Use(gin.BasicAuth(s.accounts))
 		group.GET("/health", s.health)
 		group.POST("/event", s.handleEvent)
+	}
+}
+
+func (s *HttpServer) registerPprof(eng *gin.Engine) {
+	if !config.GlobalConfig.EnablePprof {
+		return
+	}
+
+	logger.Warn(nil, "pprof endpoints enabled",
+		"path", "/debug/pprof/",
+		"action", "server_setup")
+
+	group := eng.Group("/debug/pprof", gin.BasicAuth(s.accounts))
+	{
+		group.GET("/", gin.WrapF(pprof.Index))
+		group.GET("/cmdline", gin.WrapF(pprof.Cmdline))
+		group.GET("/profile", gin.WrapF(pprof.Profile))
+		group.GET("/symbol", gin.WrapF(pprof.Symbol))
+		group.POST("/symbol", gin.WrapF(pprof.Symbol))
+		group.GET("/trace", gin.WrapF(pprof.Trace))
+		group.GET("/allocs", gin.WrapH(pprof.Handler("allocs")))
+		group.GET("/block", gin.WrapH(pprof.Handler("block")))
+		group.GET("/goroutine", gin.WrapH(pprof.Handler("goroutine")))
+		group.GET("/heap", gin.WrapH(pprof.Handler("heap")))
+		group.GET("/mutex", gin.WrapH(pprof.Handler("mutex")))
+		group.GET("/threadcreate", gin.WrapH(pprof.Handler("threadcreate")))
 	}
 }
 
@@ -86,7 +114,7 @@ func (s *HttpServer) handleEvent(ginCtx *gin.Context) {
 
 	event, err := parsers.ParseEvent(ctx, eventName, eventTypeName, requestId, body)
 	if err != nil {
-		logger.Error(ctx, "failed to parse gitverse event", 
+		logger.Error(ctx, "failed to parse gitverse event",
 			"event-name", eventName, "event-type", eventTypeName,
 			"err", err, "headers", ginCtx.Request.Header, "body", string(body))
 
