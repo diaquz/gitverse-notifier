@@ -13,7 +13,7 @@ import (
 type Pipeline struct {
 	manager   *settings.SettingsManager
 	enrichers []events.Enricher
-	dispather *dispath.Dispatcher
+	dispatcher *dispath.Dispatcher
 	queue     queue.EventQueue
 	batches   queue.BatchesManager
 }
@@ -21,7 +21,7 @@ type Pipeline struct {
 func BuildNewPipeline(
 	manager *settings.SettingsManager,
 	enrichers []events.Enricher,
-	dispather *dispath.Dispatcher,
+	dispatcher *dispath.Dispatcher,
 ) *Pipeline {
 	cfg := config.GlobalConfig
 
@@ -30,7 +30,7 @@ func BuildNewPipeline(
 		batches:   queue.NewInMemoryBatchesManager(manager),
 		enrichers: enrichers,
 		manager:   manager,
-		dispather: dispather,
+		dispatcher: dispatcher,
 	}
 }
 
@@ -54,14 +54,14 @@ func (p *Pipeline) Enqueue(ctx context.Context, event *events.Event) error {
 func (p *Pipeline) Run(ctx context.Context, event *events.Event) error {
 	setting := p.manager.SettingsByRepository(event.Repository)
 	// Пропускаем события, для которых гарантированно нет событий, чтобы лишни раз не делать запросы к gitverse API
-	if !setting.HasPotentialActions(*event) {
+	if !setting.HasPotentialActions(event) {
 		logger.Info(ctx, "no potential actions, skipping",
 			"event", event.Type, "repository", event.Repository, "action", "pipeline_run")
 		return nil
 	}
 
 	p.Enrich(ctx, event)
-	p.dispather.Dispatch(ctx, *event)
+	p.dispatcher.Dispatch(ctx, event)
 
 	return nil
 }

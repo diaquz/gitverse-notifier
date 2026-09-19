@@ -29,7 +29,7 @@ type Data struct {
 	IssueKeys     []string
 }
 
-func DataFromEvent(ev events.Event) Data {
+func DataFromEvent(ev *events.Event) Data {
 	return Data{
 		Type:          string(ev.Type),
 		Action:        ev.Action,

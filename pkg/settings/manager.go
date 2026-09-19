@@ -27,7 +27,7 @@ func (m *SettingsManager) IsJiraCodeAllowed(repository, code string) bool {
 	return settings.IsJiraCodeAllowed(code)
 }
 
-func (m *SettingsManager) ActionsFor(repository string, event events.Event) []ActionRule {
+func (m *SettingsManager) ActionsFor(repository string, event *events.Event) []ActionRule {
 	settings := m.SettingsByRepository(repository)
 	if settings == nil || event.Type == events.Unknown {
 		return nil
@@ -37,7 +37,7 @@ func (m *SettingsManager) ActionsFor(repository string, event events.Event) []Ac
 	return matched
 }
 
-func (m *SettingsManager) HasPotentialActions(repository string, event events.Event) bool {
+func (m *SettingsManager) HasPotentialActions(repository string, event *events.Event) bool {
 	settings := m.SettingsByRepository(repository)
 	return settings.HasPotentialActions(event)
 }

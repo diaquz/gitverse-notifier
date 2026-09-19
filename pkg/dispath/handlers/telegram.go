@@ -31,7 +31,7 @@ func (a *TelegramNotify) Ready() bool {
 	return a.client != nil
 }
 
-func (a *TelegramNotify) Run(ctx context.Context, event events.Event, rule *settings.ActionRule) error {
+func (a *TelegramNotify) Run(ctx context.Context, event *events.Event, rule *settings.ActionRule) error {
 	name := strings.TrimSpace(rule.Template)
 	if name == "" {
 		name = defaultTelegramTemplate

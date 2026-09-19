@@ -148,7 +148,7 @@ func TestActionsFor(t *testing.T) {
 	t.Run("returns matched actions for repository event", func(t *testing.T) {
 		t.Parallel()
 
-		got := manager.ActionsFor("org/app", events.Event{
+		got := manager.ActionsFor("org/app", &events.Event{
 			Type:   events.PullRequestOpened,
 			Branch: "feature",
 		})
@@ -160,14 +160,14 @@ func TestActionsFor(t *testing.T) {
 	t.Run("filters actions by branch", func(t *testing.T) {
 		t.Parallel()
 
-		matched := manager.ActionsFor("org/app", events.Event{
+		matched := manager.ActionsFor("org/app", &events.Event{
 			Type:   events.BranchPush,
 			Branch: "main",
 		})
 		require.Len(t, matched, 1)
 		assert.Equal(t, "main", matched[0].Branch)
 
-		unmatched := manager.ActionsFor("org/app", events.Event{
+		unmatched := manager.ActionsFor("org/app", &events.Event{
 			Type:   events.BranchPush,
 			Branch: "develop",
 		})
@@ -177,7 +177,7 @@ func TestActionsFor(t *testing.T) {
 	t.Run("uses default repository actions for unknown repo", func(t *testing.T) {
 		t.Parallel()
 
-		got := manager.ActionsFor("org/missing", events.Event{Type: events.PullRequestOpened})
+		got := manager.ActionsFor("org/missing", &events.Event{Type: events.PullRequestOpened})
 		require.Len(t, got, 1)
 		assert.Equal(t, openedRule.Action, got[0].Action)
 	})
@@ -185,7 +185,7 @@ func TestActionsFor(t *testing.T) {
 	t.Run("returns nil for unknown event type", func(t *testing.T) {
 		t.Parallel()
 
-		got := manager.ActionsFor("org/app", events.Event{Type: events.Unknown})
+		got := manager.ActionsFor("org/app", &events.Event{Type: events.Unknown})
 		assert.Nil(t, got)
 	})
 }
@@ -330,7 +330,7 @@ action_rules:
 		assert.False(t, manager.IsJiraCodeAllowed("org/app", "JIRA-1"))
 		assert.True(t, manager.IsJiraCodeAllowed("org/other", "JIRA-1"))
 
-		actions := manager.ActionsFor("org/app", events.Event{Type: events.BranchPush, Branch: "main"})
+		actions := manager.ActionsFor("org/app", &events.Event{Type: events.BranchPush, Branch: "main"})
 		require.Len(t, actions, 1)
 		assert.Equal(t, "telegram.notify", actions[0].Action)
 	})

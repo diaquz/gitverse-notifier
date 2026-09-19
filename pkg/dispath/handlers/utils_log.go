@@ -23,7 +23,7 @@ func (a *UtilsLog) Ready() bool {
 	return true
 }
 
-func (a *UtilsLog) Run(ctx context.Context, ev events.Event, rule *settings.ActionRule) error {
+func (a *UtilsLog) Run(ctx context.Context, ev *events.Event, rule *settings.ActionRule) error {
 	logger.Info(ctx, "event log",
 		"action", a.Name(),
 		"event", ev.Type,

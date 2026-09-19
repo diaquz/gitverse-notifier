@@ -42,10 +42,10 @@ func (s *RepositorySettings) IsJiraCodeAllowed(code string) bool {
 	return false
 }
 
-func (s *RepositorySettings) ActionsByEvent(event events.Event) []ActionRule {
+func (s *RepositorySettings) ActionsByEvent(event *events.Event) []ActionRule {
 	actions := make([]ActionRule, 0)
 	for _, rule := range s.Actions {
-		if !rule.Allowed(&event) {
+		if !rule.Allowed(event) {
 			continue
 		}
 
@@ -54,9 +54,9 @@ func (s *RepositorySettings) ActionsByEvent(event events.Event) []ActionRule {
 	return actions
 }
 
-func (s *RepositorySettings) HasPotentialActions(event events.Event) bool {
+func (s *RepositorySettings) HasPotentialActions(event *events.Event) bool {
 	for _, rule := range s.Actions {
-		if rule.PotentiallyAllowed(&event) {
+		if rule.PotentiallyAllowed(event) {
 			return true
 		}
 	}

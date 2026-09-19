@@ -26,14 +26,14 @@ type stubHandler struct {
 }
 
 type runCall struct {
-	event events.Event
+	event *events.Event
 	rule  settings.ActionRule
 }
 
 func (h *stubHandler) Name() string { return h.name }
 func (h *stubHandler) Ready() bool  { return h.ready }
 
-func (h *stubHandler) Run(_ context.Context, ev events.Event, rule *settings.ActionRule) error {
+func (h *stubHandler) Run(_ context.Context, ev *events.Event, rule *settings.ActionRule) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.runs = append(h.runs, runCall{event: ev, rule: *rule})
@@ -121,7 +121,7 @@ action_rules:
 	handler := &stubHandler{name: "utils.log", ready: true}
 	d := NewDispatcher(manager, handler)
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.BranchPush,
 		Repository: "org/app",
 		Branch:     "main",
@@ -140,7 +140,7 @@ action_rules:
 	other := &stubHandler{name: "utils.log", ready: true}
 	d := NewDispatcher(manager, other)
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.PullRequestOpened,
 		Repository: "org/app",
 	})
@@ -159,7 +159,7 @@ action_rules:
 	handler := &stubHandler{name: "telegram.notify", ready: false}
 	d := NewDispatcher(manager, handler)
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.PullRequestOpened,
 		Repository: "org/app",
 	})
@@ -178,7 +178,7 @@ action_rules:
 	handler := &stubHandler{name: "utils.log", ready: true}
 	d := NewDispatcher(manager, handler)
 
-	event := events.Event{
+	event := &events.Event{
 		Type:       events.PullRequestOpened,
 		Repository: "org/app",
 	}
@@ -206,7 +206,7 @@ action_rules:
 	ok := &stubHandler{name: "second.action", ready: true}
 	d := NewDispatcher(manager, failing, ok)
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.PullRequestOpened,
 		Repository: "org/app",
 	})
@@ -233,14 +233,14 @@ action_rules:
 	tgHandler := &stubHandler{name: "telegram.notify", ready: true}
 	d := NewDispatcher(manager, logHandler, tgHandler)
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.PullRequestOpened,
 		Repository: "org/app",
 	})
 	assert.Equal(t, 0, logHandler.runCount())
 	assert.Equal(t, 1, tgHandler.runCount())
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.PullRequestOpened,
 		Repository: "org/other",
 	})
@@ -259,14 +259,14 @@ action_rules:
 	handler := &stubHandler{name: "telegram.notify", ready: true}
 	d := NewDispatcher(manager, handler)
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.BranchPush,
 		Repository: "org/app",
 		Branch:     "develop",
 	})
 	assert.Equal(t, 0, handler.runCount())
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.BranchPush,
 		Repository: "org/app",
 		Branch:     "main",
@@ -284,7 +284,7 @@ action_rules:
 	handler := &stubHandler{name: "utils.log", ready: true}
 	d := NewDispatcher(manager, handler)
 
-	d.Dispatch(context.Background(), events.Event{
+	d.Dispatch(context.Background(), &events.Event{
 		Type:       events.Unknown,
 		Repository: "org/app",
 	})

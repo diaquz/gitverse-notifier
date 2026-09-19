@@ -8,6 +8,6 @@ import (
 
 type ActionHandler interface {
 	Name() string
-	Run(ctx context.Context, ev events.Event, rule *settings.ActionRule) error
+	Run(context.Context, *events.Event, *settings.ActionRule) error
 	Ready() bool
 }

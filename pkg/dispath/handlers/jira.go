@@ -31,7 +31,7 @@ func (a *JiraCommentIssue) Ready() bool {
 	return a.client != nil
 }
 
-func (a *JiraCommentIssue) Run(ctx context.Context, event events.Event, rule *settings.ActionRule) error {
+func (a *JiraCommentIssue) Run(ctx context.Context, event *events.Event, rule *settings.ActionRule) error {
 	templateName := strings.TrimSpace(rule.Template)
 	if templateName == "" {
 		templateName = defaultJiraTemplate

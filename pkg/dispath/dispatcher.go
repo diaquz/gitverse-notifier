@@ -8,6 +8,11 @@ import (
 	"gitverse-notifier/pkg/settings"
 )
 
+type EventDispather interface {
+	Dispathable(*events.Event) bool
+	Dispatch(context.Context, *events.Event) error
+}
+
 type Dispatcher struct {
 	manager  *settings.SettingsManager
 	handlers map[string]ActionHandler
@@ -24,15 +29,15 @@ func NewDispatcher(manager *settings.SettingsManager, handlers ...ActionHandler)
 	return d
 }
 
-func (d *Dispatcher) PotentialyDispathable(event events.Event) bool {
+func (d *Dispatcher) Dispathable(event *events.Event) bool {
 	return d.manager.HasPotentialActions(event.Repository, event)
 }
 
-func (d *Dispatcher) Dispatch(ctx context.Context, event events.Event) {
+func (d *Dispatcher) Dispatch(ctx context.Context, event *events.Event) error {
 	rules := d.manager.ActionsFor(event.Repository, event)
 	if len(rules) == 0 {
 		logger.Info(ctx, "no actions for event", "event", event.Type, "repository", event.Repository)
-		return
+		return nil
 	}
 
 	for _, rule := range rules {
@@ -54,6 +59,8 @@ func (d *Dispatcher) Dispatch(ctx context.Context, event events.Event) {
 				"action", rule.Action, "event", event.Type, "repository", event.Repository, "err", err)
 		}
 	}
+
+	return nil
 }
 
 func (d *Dispatcher) Register(handler ActionHandler) error {
