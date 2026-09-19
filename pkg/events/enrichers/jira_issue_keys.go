@@ -64,6 +64,10 @@ func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 		add(key)
 	}
 
+	for _, key := range issueKeysInText(event.Push.CommitTitle) {
+		add(key)
+	}
+
 	for _, key := range issueKeysInText(event.Branch) {
 		add(key)
 	}
@@ -78,6 +82,10 @@ func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 //	JIRA-2 JIRA-3 Заголовок
 //	Слияние из ветки JIRA-1 в develop
 func issueKeysInText(text string) []string {
+	if text == "" {
+		return nil
+	}
+
 	matches := issueKeyRe.FindAllString(text, -1)
 	if len(matches) == 0 {
 		return nil

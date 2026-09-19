@@ -3,7 +3,7 @@ package pipeline
 import (
 	"context"
 	"gitverse-notifier/pkg/config"
-	"gitverse-notifier/pkg/dispath"
+	"gitverse-notifier/pkg/dispatch"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
 	"gitverse-notifier/pkg/queue"
@@ -14,7 +14,7 @@ import (
 type Pipeline struct {
 	manager    *settings.SettingsManager
 	enrichers  []events.Enricher
-	dispatcher dispath.EventDispather
+	dispatcher dispatch.EventDispatcher
 	queue      queue.EventQueue
 	batches    queue.BatchesManager
 }
@@ -22,7 +22,7 @@ type Pipeline struct {
 func BuildNewPipeline(
 	manager *settings.SettingsManager,
 	enrichers []events.Enricher,
-	dispatcher dispath.EventDispather,
+	dispatcher dispatch.EventDispatcher,
 ) *Pipeline {
 	cfg := config.GlobalConfig
 
@@ -45,7 +45,9 @@ func (p *Pipeline) Enqueue(ctx context.Context, event *events.Event) error {
 	if events, ok := p.batches.TryProcessBucket(ctx, key); ok {
 		for _, event := range events {
 			if err := p.queue.Enqueue(ctx, event); err != nil {
-				return err
+				logger.Error(ctx, "failed to enqueue batch event",
+					"event", event.Type, "repository", event.Repository,
+					"err", err)
 			}
 		}
 	}

@@ -17,7 +17,7 @@ func NewGitverseCommit(queries *gvqueries.Queries) *GitverseCommit {
 }
 
 func (e *GitverseCommit) Name() string {
-	return "gitverse.commi"
+	return "gitverse.commit"
 }
 
 func (e *GitverseCommit) Skip(event *events.Event) bool {

@@ -1,4 +1,4 @@
-package dispath
+package dispatch
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"gitverse-notifier/pkg/settings"
 )
 
-type EventDispather interface {
+type EventDispatcher interface {
 	Dispathable(*events.Event) bool
 	Dispatch(context.Context, *events.Event) error
 }
