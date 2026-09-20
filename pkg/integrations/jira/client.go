@@ -11,7 +11,7 @@ import (
 )
 
 type JiraClient struct {
-	client *gojira.Client
+	client  *gojira.Client
 	baseURL string
 }
 
@@ -69,4 +69,27 @@ func (j *JiraClient) AddComment(taskCode, body string) (*gojira.Comment, error) 
 	}
 
 	return comment, nil
+}
+
+func (j *JiraClient) AddMentionedAtWeb(taskCode, url, title string) (*gojira.RemoteLink, error) {
+	if title == "" {
+		title = url
+	}
+
+	link, resp, err := j.client.Issue.AddRemoteLink(taskCode, &gojira.RemoteLink{
+		GlobalID:     url,
+		Relationship: "mentioned in",
+		Object: &gojira.RemoteLinkObject{
+			URL:   url,
+			Title: title,
+		},
+	})
+	if err != nil {
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return nil, fmt.Errorf("task %s not found", taskCode)
+		}
+		return nil, fmt.Errorf("failed to add web link to issue %s: %w", taskCode, err)
+	}
+
+	return link, nil
 }

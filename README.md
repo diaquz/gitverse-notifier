@@ -88,6 +88,9 @@ action_rules:
     template: jira/pr_opened # Название шаблона
 
   - on: pull_request.opened
+    action: jira.mention_at_web # Web-ссылка на PR в задаче Jira
+
+  - on: pull_request.opened
     action: telegram.notify
     template: telegram/pr_opened
 
@@ -125,6 +128,7 @@ action_rules:
 | Действие | Описание |
 |---|---|
 | `jira.comment_issue` | Создает комментарий для задачи в Jira |
+| `jira.mention_at_web` | Добавляет web-ссылку (mentioned in) на PR к задаче в Jira |
 | `telegram.notify` | Отправляет уведомление в Telegram |
 | `utils.log` | Пишет событие в лог (для отладки) |
 

@@ -88,6 +88,7 @@ func buildEventPipeline(ctx context.Context) *pipeline.Pipeline {
 	dispatcher := dispatch.NewDispatcher(
 		manager,
 		handlers.NewJiraCommentIssue(jiraClient, engine),
+		handlers.NewJiraMentionAtWeb(jiraClient),
 		handlers.NewTelegramNotify(tgClient, engine),
 		handlers.NewUtilsLog(),
 	)
