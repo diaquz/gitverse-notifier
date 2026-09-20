@@ -5,15 +5,15 @@ import (
 
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/integrations/gitverse"
-	gvqueries "gitverse-notifier/pkg/queries/gitverse"
+	"gitverse-notifier/pkg/requests"
 )
 
 type GitverseCommit struct {
-	queries *gvqueries.Queries
+	dispatcher *requests.RequestsDispatcher
 }
 
-func NewGitverseCommit(queries *gvqueries.Queries) *GitverseCommit {
-	return &GitverseCommit{queries: queries}
+func NewGitverseCommit(dispatcher *requests.RequestsDispatcher) *GitverseCommit {
+	return &GitverseCommit{dispatcher: dispatcher}
 }
 
 func (e *GitverseCommit) Name() string {
@@ -26,7 +26,7 @@ func (e *GitverseCommit) Skip(event *events.Event) bool {
 
 func (e *GitverseCommit) Enrich(ctx context.Context, event *events.Event) error {
 
-	commit, err := e.queries.GetCommitInfo(ctx, gvqueries.GetCommitInfo{
+	commit, err := e.dispatcher.HandleGetCommitInfo(ctx, requests.GetCommitInfo{
 		Repo:      event.Repository,
 		After:     event.Push.After,
 		EventType: event.Type,

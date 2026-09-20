@@ -10,15 +10,15 @@ import (
 
 	"gitverse-notifier/pkg/cache"
 	"gitverse-notifier/pkg/config"
-	"gitverse-notifier/pkg/handlers"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/enrichers"
+	"gitverse-notifier/pkg/handlers"
 	"gitverse-notifier/pkg/integrations/gitverse"
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/integrations/telegram"
 	"gitverse-notifier/pkg/logger"
 	"gitverse-notifier/pkg/pipeline"
-	gvqueries "gitverse-notifier/pkg/queries/gitverse"
+	"gitverse-notifier/pkg/requests"
 	"gitverse-notifier/pkg/server"
 	"gitverse-notifier/pkg/settings"
 	"gitverse-notifier/pkg/templates"
@@ -91,9 +91,9 @@ func buildEventPipeline(ctx context.Context) *pipeline.Pipeline {
 
 	eventEnrichers := make([]events.Enricher, 0, 5)
 	if gitverseClient != nil {
-		queries := gvqueries.New(gitverseClient, cache.NewMemoryPullRequestCache())
-		eventEnrichers = append(eventEnrichers, enrichers.NewGitversePullRequest(queries))
-		eventEnrichers = append(eventEnrichers, enrichers.NewGitverseCommit(queries))
+		dispatcher := requests.NewRequestsDispather(gitverseClient, cache.NewMemoryPullRequestCache())
+		eventEnrichers = append(eventEnrichers, enrichers.NewGitversePullRequest(dispatcher))
+		eventEnrichers = append(eventEnrichers, enrichers.NewGitverseCommit(dispatcher))
 	}
 
 	eventEnrichers = append(eventEnrichers, enrichers.NewJiraIssueKeys(manager))
