@@ -17,7 +17,7 @@ func NewGitversePullRequest(queries *gvqueries.Queries) *GitversePullRequest {
 }
 
 func (e *GitversePullRequest) Name() string {
-	return "gitverse.pull_request"
+	return "enricher.gitverse-pull-request"
 }
 
 func (e *GitversePullRequest) Skip(event *events.Event) bool {

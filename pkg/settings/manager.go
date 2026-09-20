@@ -66,11 +66,11 @@ func SetupSettingsManager() (*SettingsManager, error) {
 		name := entry.Name()
 
 		if entry.IsDir() {
-			logger.Debug(nil, "directory skipped", "action", "settings_setup", "name", name)
+			logger.Debug(nil, "directory skipped", "action", "settings.setup", "name", name)
 			continue
 		}
 		if !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") {
-			logger.Debug(nil, "config file skipped", "action", "settings_setup", "name", name)
+			logger.Debug(nil, "config file skipped", "action", "settings.setup", "name", name)
 			continue
 		}
 
@@ -84,7 +84,7 @@ func SetupSettingsManager() (*SettingsManager, error) {
 			manager.defaultSetting = *settings
 			defaultSettingsInitialized = true
 			logger.Debug(nil, "loaded default repository settings",
-				"action", "settings_setup",
+				"action", "settings.setup",
 				"name", name,
 				"actions", manager.defaultSetting.RenderActionsCodes())
 			continue
@@ -92,7 +92,7 @@ func SetupSettingsManager() (*SettingsManager, error) {
 
 		manager.mapping[settings.Repository] = settings
 		logger.Debug(nil, "loaded repository settings",
-			"action", "settings_setup",
+			"action", "settings.setup",
 			"name", name,
 			"repository", settings.Repository,
 			"actions", settings.RenderActionsCodes())

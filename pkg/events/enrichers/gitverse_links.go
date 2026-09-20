@@ -20,7 +20,7 @@ func NewGitverseLinks(manager *settings.SettingsManager) *GitverseLinks {
 }
 
 func (e *GitverseLinks) Name() string {
-	return "gitverse.links"
+	return "enricher.gitverse-links"
 }
 
 func (e *GitverseLinks) Skip(event *events.Event) bool {

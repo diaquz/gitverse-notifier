@@ -23,7 +23,7 @@ func NewJiraIssueKeys(manager *settings.SettingsManager) *JiraIssueKeys {
 }
 
 func (e *JiraIssueKeys) Name() string {
-	return "jira.issue_keys"
+	return "enricher.jira-issue-keys"
 }
 
 func (e *JiraIssueKeys) Skip(event *events.Event) bool {
@@ -45,8 +45,7 @@ func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 
 		if !e.manager.IsJiraCodeAllowed(event.Repository, key) {
 			logger.Debug(ctx, "jira issue key is permited",
-				"action", "event_parsing",
-				"enricher", e.Name(),
+				"action", e.Name(),
 				"issue-key", key,
 				"event", event.Type,
 				"repository", event.Repository)

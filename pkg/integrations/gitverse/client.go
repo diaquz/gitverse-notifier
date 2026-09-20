@@ -88,3 +88,33 @@ func (c *Client) GetCommit(ctx context.Context, repository, sha string) (*Commit
 
 	return &commit, nil
 }
+
+type createIssueCommentRequest struct {
+	Body string `json:"body"`
+}
+
+func (c *Client) CreateIssueComment(ctx context.Context, repository string, issueNumber int, body string) error {
+	if repository == "" || issueNumber <= 0 {
+		return fmt.Errorf("invalid issue comment parameters: %s/issues/%d", repository, issueNumber)
+	}
+
+	resp, err := c.resty.R().
+		SetContext(ctx).
+		SetPathParams(map[string]string{
+			"repo":   repository,
+			"number": fmt.Sprintf("%d", issueNumber),
+		}).
+		SetBody(createIssueCommentRequest{Body: body}).
+		Post("/repos/{repo}/issues/{number}/comments")
+
+	if err != nil {
+		return fmt.Errorf("failed to make gitverse request: %w", err)
+	}
+
+	if resp.IsError() {
+		return fmt.Errorf("gitverse api returned %d for %s: %s",
+			resp.StatusCode(), resp.Request.URL, string(resp.Body()))
+	}
+
+	return nil
+}

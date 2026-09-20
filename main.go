@@ -10,8 +10,7 @@ import (
 
 	"gitverse-notifier/pkg/cache"
 	"gitverse-notifier/pkg/config"
-	"gitverse-notifier/pkg/dispatch"
-	"gitverse-notifier/pkg/dispatch/handlers"
+	"gitverse-notifier/pkg/handlers"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/enrichers"
 	"gitverse-notifier/pkg/integrations/gitverse"
@@ -85,14 +84,6 @@ func buildEventPipeline(ctx context.Context) *pipeline.Pipeline {
 		logger.Error(ctx, "failed to configure telegram client", "err", tgErr)
 	}
 
-	dispatcher := dispatch.NewDispatcher(
-		manager,
-		handlers.NewJiraCommentIssue(jiraClient, engine),
-		handlers.NewJiraMentionAtWeb(jiraClient),
-		handlers.NewTelegramNotify(tgClient, engine),
-		handlers.NewUtilsLog(),
-	)
-
 	gitverseClient, gitverseErr := gitverse.NewClient()
 	if gitverseErr != nil {
 		logger.Error(ctx, "failed to configure gitverse client", "err", gitverseErr)
@@ -112,7 +103,11 @@ func buildEventPipeline(ctx context.Context) *pipeline.Pipeline {
 	return pipeline.BuildNewPipeline(
 		manager,
 		eventEnrichers,
-		dispatcher,
+		handlers.NewJiraCommentIssue(jiraClient, engine),
+		handlers.NewJiraMentionAtWeb(jiraClient),
+		handlers.NewGitverseCreateComment(gitverseClient, engine),
+		handlers.NewTelegramNotify(tgClient, engine),
+		handlers.NewUtilsLog(),
 	)
 }
 

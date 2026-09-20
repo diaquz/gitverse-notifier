@@ -91,6 +91,10 @@ action_rules:
     action: jira.mention_at_web # Web-ссылка на PR в задаче Jira
 
   - on: pull_request.opened
+    action: gitverse.create_comment # Ссылки на Jira в комментарии к PR
+    template: gitverse/jira_issues
+
+  - on: pull_request.opened
     action: telegram.notify
     template: telegram/pr_opened
 
@@ -129,6 +133,7 @@ action_rules:
 |---|---|
 | `jira.comment_issue` | Создает комментарий для задачи в Jira |
 | `jira.mention_at_web` | Добавляет web-ссылку (mentioned in) на PR к задаче в Jira |
+| `gitverse.create_comment` | Создает комментарий в PR Gitverse |
 | `telegram.notify` | Отправляет уведомление в Telegram |
 | `utils.log` | Пишет событие в лог (для отладки) |
 
@@ -142,7 +147,7 @@ action_rules:
 
 Имена шаблонов можно указываться в action->template.
 
-Доступные хелперы: `tgMention`, `tgMentions`, `tgLink`, `tgIssueURLs`,  `jiraLink`, `jiraIssueURLs`, `IssueURL`, `tgIssueURLs`, `jiraIssueURLs`, `join`, `trim`, `jiraEscape`.
+Доступные хелперы: `tgMention`, `tgMentions`, `tgLink`, `tgIssueURLs`, `mdLink`, `mdIssueURLs`, `jiraLink`, `jiraIssueURLs`, `issueURL`, `join`, `trim`, `jiraEscape`.
 Пример шаблона
 
 ```

@@ -98,6 +98,17 @@ func JiraLink(text, link string) string {
 	return fmt.Sprintf("[%s|%s]", text, link)
 }
 
+func MarkdownLink(text, link string) string {
+	if link == "" {
+		return text
+	}
+	return fmt.Sprintf("[%s](%s)", text, link)
+}
+
+func MarkdownIssueURLs(keys []string) string {
+	return joinIssueURLs(keys, MarkdownLink)
+}
+
 func TelegramLink(text, link string) string {
 	text = TelegramEscape(text)
 	if link == "" {

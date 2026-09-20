@@ -57,6 +57,12 @@ available_actions:
   - type: jira.comment_issue
     description: Создает комментарии для каждой задачи, упомянутой в событии
 
+  - type: jira.mention_at_web
+    description: Добавляет ссылку (mentioned in) на PR к каждой задаче из события
+
+  - type: gitverse.create_comment
+    description: Создает комментарий в PR Gitverse (например, со ссылками на связанные Jira-задачи)
+
   - type: telegram.notify
     description: Отправляет сообщение в telegram
 
@@ -80,6 +86,13 @@ action_rules:
   - on: pull_request.opened # Тип события
     action: jira.comment_issue # Действие
     template: jira/pr_opened # Имя шаблона (из templates/)
+
+  - on: pull_request.opened
+    action: jira.mention_at_web
+
+  - on: pull_request.opened
+    action: gitverse.create_comment # Комментарий в PR со ссылками на Jira
+    template: gitverse/jira_issues
 
   - on: pull_request.opened
     action: telegram.notify

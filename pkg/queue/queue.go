@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"gitverse-notifier/pkg/events"
+	"gitverse-notifier/pkg/logger"
 )
 
 var ErrQueueFull = errors.New("event queue is full")
@@ -30,6 +31,7 @@ func NewMemoryQueue(size int) *MemoryQueue {
 func (q *MemoryQueue) Enqueue(ctx context.Context, event *events.Event) error {
 	select {
 	case q.ch <- event:
+		logger.Debug(ctx, "added event to queue", "action", "memory-queue.enqueue", "event", event.Type, "repository", event.Repository)
 		return nil
 	case <-ctx.Done():
 		return fmt.Errorf("enqueue cancelled: %w", ctx.Err())

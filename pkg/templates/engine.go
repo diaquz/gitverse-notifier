@@ -58,9 +58,11 @@ func funcMap() template.FuncMap {
 		"trim":             strings.TrimSpace,
 		"join":             strings.Join,
 		"jiraLink":         JiraLink,
+		"mdLink":           MarkdownLink,
 		"tgLink":           TelegramLink,
 		"issueURL":         IssueURL,
 		"tgIssueURLs":      TelegramIssueURLs,
+		"mdIssueURLs":      MarkdownIssueURLs,
 		"jiraIssueURLs":    JiraIssueURLs,
 		"tgMention":        TelegramMention,
 		"tgMentions":       TelegramMentions,
@@ -96,7 +98,7 @@ func SetupTemplateEngine() (*Engine, error) {
 			return nil, fmt.Errorf("failed to parse template %s: %w", path, err)
 		}
 
-		logger.Debug(nil, "template registered", "action", "templates_setup", "template", name, "path", path)
+		logger.Debug(nil, "template registered", "action", "templates.setup", "template", name, "path", path)
 	}
 
 	return &Engine{engine: root}, nil

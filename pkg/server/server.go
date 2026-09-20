@@ -105,9 +105,7 @@ func (s *HttpServer) registerPprof(eng *gin.Engine) {
 		return
 	}
 
-	logger.Warn(nil, "pprof endpoints enabled",
-		"path", "/debug/pprof/",
-		"action", "server_setup")
+	logger.Warn(nil, "pprof endpoints enabled", "path", "/debug/pprof/", "action", "server.setup")
 
 	group := eng.Group("/debug/pprof", gin.BasicAuth(s.accounts))
 	{
