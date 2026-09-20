@@ -8,6 +8,7 @@ import (
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/logger"
+	"gitverse-notifier/pkg/settings"
 	"gitverse-notifier/pkg/templates"
 )
 
@@ -30,7 +31,7 @@ func (a *JiraCommentIssue) Ready() bool {
 	return a.client != nil
 }
 
-func (a *JiraCommentIssue) Run(ctx context.Context, event events.Event, rule *events.ActionRule) error {
+func (a *JiraCommentIssue) Run(ctx context.Context, event *events.Event, rule *settings.ActionRule) error {
 	templateName := strings.TrimSpace(rule.Template)
 	if templateName == "" {
 		templateName = defaultJiraTemplate

@@ -25,7 +25,6 @@ type Config struct {
 	ConfigsDirPath      string `mapstructure:"CONFIGS_DIR_PATH"`
 	TemplatesDirPath    string `mapstructure:"TEMPLATES_DIR_PATH"`
 	TemplatesPattern    string `mapstructure:"TEMPLATES_PATTERN"`
-	RepositoriesDirPath string `mapstructure:"REPOSITORIES_DIR_PATH"`
 
 	BasicAuthUser     string `mapstructure:"BASIC_AUTH_USER"`
 	BasicAuthPassword string `mapstructure:"BASIC_AUTH_PASSWORD"`
@@ -52,6 +51,11 @@ type Config struct {
 	GitverseToken   string `mapstructure:"GITVERSE_TOKEN"`
 
 	CacheTTL int `mapstructure:"CACHE_TTL"`
+
+	EventQueueSize   int `mapstructure:"EVENT_QUEUE_SIZE"`
+	EventWorkerCount int `mapstructure:"EVENT_WORKER_COUNT"`
+
+	EnablePprof bool `mapstructure:"ENABLE_PPROF"`
 }
 
 func Setup(configPath string) {
@@ -85,7 +89,6 @@ func getDefaultConfig() Config {
 		LogMaxAge:           7,
 		ConfigsDirPath:      settingsPath,
 		TemplatesDirPath:    templatesPath,
-		RepositoriesDirPath: settingsPath,
 		BindHost:            "0.0.0.0",
 		HTTPPort:            "9001",
 		LogLevel:            "INFO",
@@ -94,6 +97,9 @@ func getDefaultConfig() Config {
 		TemplatesPattern:    "**/*.tmpl",
 		TelegramParseMode:   "MarkdownV2",
 		CacheTTL:            60,
+		EventQueueSize:      256,
+		EventWorkerCount:    8,
+		EnablePprof:         false,
 	}
 }
 

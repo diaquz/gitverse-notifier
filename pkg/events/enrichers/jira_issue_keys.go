@@ -23,7 +23,7 @@ func NewJiraIssueKeys(manager *settings.SettingsManager) *JiraIssueKeys {
 }
 
 func (e *JiraIssueKeys) Name() string {
-	return "jira.issue_keys"
+	return "enricher.jira-issue-keys"
 }
 
 func (e *JiraIssueKeys) Skip(event *events.Event) bool {
@@ -45,8 +45,7 @@ func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 
 		if !e.manager.IsJiraCodeAllowed(event.Repository, key) {
 			logger.Debug(ctx, "jira issue key is permited",
-				"action", "event_parsing",
-				"enricher", e.Name(),
+				"action", e.Name(),
 				"issue-key", key,
 				"event", event.Type,
 				"repository", event.Repository)
@@ -64,6 +63,10 @@ func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 		add(key)
 	}
 
+	for _, key := range issueKeysInText(event.Push.CommitTitle) {
+		add(key)
+	}
+
 	for _, key := range issueKeysInText(event.Branch) {
 		add(key)
 	}
@@ -78,6 +81,10 @@ func (e *JiraIssueKeys) Enrich(ctx context.Context, event *events.Event) error {
 //	JIRA-2 JIRA-3 Заголовок
 //	Слияние из ветки JIRA-1 в develop
 func issueKeysInText(text string) []string {
+	if text == "" {
+		return nil
+	}
+
 	matches := issueKeyRe.FindAllString(text, -1)
 	if len(matches) == 0 {
 		return nil

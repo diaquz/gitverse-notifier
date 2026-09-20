@@ -118,13 +118,13 @@ func TestIsJiraCodeAllowed(t *testing.T) {
 func TestActionsFor(t *testing.T) {
 	t.Parallel()
 
-	openedRule := events.ActionRule{
+	openedRule := ActionRule{
 		On:       events.PullRequestOpened,
 		OnCode:   string(events.PullRequestOpened),
 		Action:   "telegram.notify",
 		Template: "telegram/pr_opened",
 	}
-	pushMainRule := events.ActionRule{
+	pushMainRule := ActionRule{
 		On:       events.BranchPush,
 		OnCode:   string(events.BranchPush),
 		Action:   "telegram.notify",
@@ -135,12 +135,12 @@ func TestActionsFor(t *testing.T) {
 	manager := newTestManager(
 		RepositorySettings{
 			Repository: DefaultRepository,
-			Actions:    []events.ActionRule{openedRule},
+			Actions:    []ActionRule{openedRule},
 		},
 		map[string]*RepositorySettings{
 			"org/app": {
 				Repository: "org/app",
-				Actions:    []events.ActionRule{openedRule, pushMainRule},
+				Actions:    []ActionRule{openedRule, pushMainRule},
 			},
 		},
 	)
@@ -148,7 +148,7 @@ func TestActionsFor(t *testing.T) {
 	t.Run("returns matched actions for repository event", func(t *testing.T) {
 		t.Parallel()
 
-		got := manager.ActionsFor("org/app", events.Event{
+		got := manager.ActionsFor("org/app", &events.Event{
 			Type:   events.PullRequestOpened,
 			Branch: "feature",
 		})
@@ -160,14 +160,14 @@ func TestActionsFor(t *testing.T) {
 	t.Run("filters actions by branch", func(t *testing.T) {
 		t.Parallel()
 
-		matched := manager.ActionsFor("org/app", events.Event{
+		matched := manager.ActionsFor("org/app", &events.Event{
 			Type:   events.BranchPush,
 			Branch: "main",
 		})
 		require.Len(t, matched, 1)
 		assert.Equal(t, "main", matched[0].Branch)
 
-		unmatched := manager.ActionsFor("org/app", events.Event{
+		unmatched := manager.ActionsFor("org/app", &events.Event{
 			Type:   events.BranchPush,
 			Branch: "develop",
 		})
@@ -177,7 +177,7 @@ func TestActionsFor(t *testing.T) {
 	t.Run("uses default repository actions for unknown repo", func(t *testing.T) {
 		t.Parallel()
 
-		got := manager.ActionsFor("org/missing", events.Event{Type: events.PullRequestOpened})
+		got := manager.ActionsFor("org/missing", &events.Event{Type: events.PullRequestOpened})
 		require.Len(t, got, 1)
 		assert.Equal(t, openedRule.Action, got[0].Action)
 	})
@@ -185,7 +185,7 @@ func TestActionsFor(t *testing.T) {
 	t.Run("returns nil for unknown event type", func(t *testing.T) {
 		t.Parallel()
 
-		got := manager.ActionsFor("org/app", events.Event{Type: events.Unknown})
+		got := manager.ActionsFor("org/app", &events.Event{Type: events.Unknown})
 		assert.Nil(t, got)
 	})
 }
@@ -216,27 +216,10 @@ action_rules:
 		require.NotNil(t, got)
 
 		assert.Equal(t, "org/app", got.Repository)
-		assert.Equal(t, "https://gitverse.example", got.Url)
 		assert.Equal(t, []string{"APP", "JIRA"}, got.AllowedJiraProjects)
 		require.Len(t, got.Actions, 1)
 		assert.Equal(t, events.PullRequestOpened, got.Actions[0].On)
 		assert.Equal(t, "telegram.notify", got.Actions[0].Action)
-	})
-
-	t.Run("keeps explicit url", func(t *testing.T) {
-		dir := t.TempDir()
-		path := filepath.Join(dir, "app.yml")
-		content := `
-repository: org/app
-url: https://custom.example/org/app
-allowed_jira_projects: []
-action_rules: []
-`
-		require.NoError(t, os.WriteFile(path, []byte(content), 0o644))
-
-		got, err := loadRepositorySettings(path)
-		require.NoError(t, err)
-		assert.Equal(t, "https://custom.example/org/app", got.Url)
 	})
 
 	t.Run("requires repository name", func(t *testing.T) {
@@ -313,7 +296,7 @@ action_rules:
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "notes.txt"), []byte("ignore me"), 0o644))
 
 		config.GlobalConfig = &config.Config{
-			RepositoriesDirPath: dir,
+			ConfigsDirPath: dir,
 			GitverseBaseURL:     "https://gitverse.example",
 		}
 
@@ -330,7 +313,7 @@ action_rules:
 		assert.False(t, manager.IsJiraCodeAllowed("org/app", "JIRA-1"))
 		assert.True(t, manager.IsJiraCodeAllowed("org/other", "JIRA-1"))
 
-		actions := manager.ActionsFor("org/app", events.Event{Type: events.BranchPush, Branch: "main"})
+		actions := manager.ActionsFor("org/app", &events.Event{Type: events.BranchPush, Branch: "main"})
 		require.Len(t, actions, 1)
 		assert.Equal(t, "telegram.notify", actions[0].Action)
 	})
@@ -342,7 +325,7 @@ repository: org/app
 action_rules: []
 `), 0o644))
 
-		config.GlobalConfig = &config.Config{RepositoriesDirPath: dir}
+		config.GlobalConfig = &config.Config{ConfigsDirPath: dir}
 
 		manager, err := SetupSettingsManager()
 		assert.Nil(t, manager)
@@ -352,7 +335,7 @@ action_rules: []
 
 	t.Run("fails when settings directory is missing", func(t *testing.T) {
 		config.GlobalConfig = &config.Config{
-			RepositoriesDirPath: filepath.Join(t.TempDir(), "does-not-exist"),
+			ConfigsDirPath: filepath.Join(t.TempDir(), "does-not-exist"),
 		}
 
 		manager, err := SetupSettingsManager()
@@ -374,7 +357,7 @@ action_rules:
     action: utils.log
 `), 0o644))
 
-		config.GlobalConfig = &config.Config{RepositoriesDirPath: dir}
+		config.GlobalConfig = &config.Config{ConfigsDirPath: dir}
 
 		manager, err := SetupSettingsManager()
 		assert.Nil(t, manager)

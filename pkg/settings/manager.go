@@ -27,7 +27,7 @@ func (m *SettingsManager) IsJiraCodeAllowed(repository, code string) bool {
 	return settings.IsJiraCodeAllowed(code)
 }
 
-func (m *SettingsManager) ActionsFor(repository string, event events.Event) []events.ActionRule {
+func (m *SettingsManager) ActionsFor(repository string, event *events.Event) []ActionRule {
 	settings := m.SettingsByRepository(repository)
 	if settings == nil || event.Type == events.Unknown {
 		return nil
@@ -37,7 +37,7 @@ func (m *SettingsManager) ActionsFor(repository string, event events.Event) []ev
 	return matched
 }
 
-func (m *SettingsManager) HasPotentialActions(repository string, event events.Event) bool {
+func (m *SettingsManager) HasPotentialActions(repository string, event *events.Event) bool {
 	settings := m.SettingsByRepository(repository)
 	return settings.HasPotentialActions(event)
 }
@@ -49,8 +49,9 @@ func (m *SettingsManager) SettingsByRepository(repository string) *RepositorySet
 	return &m.defaultSetting
 }
 
+
 func SetupSettingsManager() (*SettingsManager, error) {
-	settingsDir := config.GlobalConfig.RepositoriesDirPath
+	settingsDir := config.GlobalConfig.ConfigsDirPath
 	entries, err := os.ReadDir(settingsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read settings dir %s: %w", settingsDir, err)
@@ -65,11 +66,11 @@ func SetupSettingsManager() (*SettingsManager, error) {
 		name := entry.Name()
 
 		if entry.IsDir() {
-			logger.Debug(nil, "directory skipped", "action", "settings_setup", "name", name)
+			logger.Debug(nil, "directory skipped", "action", "settings.setup", "name", name)
 			continue
 		}
 		if !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") {
-			logger.Debug(nil, "config file skipped", "action", "settings_setup", "name", name)
+			logger.Debug(nil, "config file skipped", "action", "settings.setup", "name", name)
 			continue
 		}
 
@@ -83,7 +84,7 @@ func SetupSettingsManager() (*SettingsManager, error) {
 			manager.defaultSetting = *settings
 			defaultSettingsInitialized = true
 			logger.Debug(nil, "loaded default repository settings",
-				"action", "settings_setup",
+				"action", "settings.setup",
 				"name", name,
 				"actions", manager.defaultSetting.RenderActionsCodes())
 			continue
@@ -91,10 +92,10 @@ func SetupSettingsManager() (*SettingsManager, error) {
 
 		manager.mapping[settings.Repository] = settings
 		logger.Debug(nil, "loaded repository settings",
-			"action", "settings_setup",
+			"action", "settings.setup",
 			"name", name,
 			"repository", settings.Repository,
-			"actions", manager.defaultSetting.RenderActionsCodes())
+			"actions", settings.RenderActionsCodes())
 	}
 
 	if !defaultSettingsInitialized {
@@ -119,10 +120,6 @@ func loadRepositorySettings(path string) (*RepositorySettings, error) {
 		return nil, fmt.Errorf("repository name is required in %s", path)
 	}
 
-	if settings.Url == "" {
-		settings.Url = config.GlobalConfig.GitverseBaseURL
-	}
-
 	for i, code := range settings.AllowedJiraProjects {
 		settings.AllowedJiraProjects[i] = strings.ToUpper(strings.TrimSpace(code))
 	}
@@ -133,6 +130,14 @@ func loadRepositorySettings(path string) (*RepositorySettings, error) {
 			return nil, fmt.Errorf("action for unknown event '%s' in %q", settings.Actions[i].OnCode, path)
 		}
 		settings.Actions[i].On = eventType
+	}
+
+	for i := range settings.Groups {
+		eventType, ok := events.ParseEventType(settings.Groups[i].EventRaw)
+		if !ok {
+			return nil, fmt.Errorf("group for unknown event '%s' in %q", settings.Groups[i].EventRaw, path)
+		}
+		settings.Groups[i].Event = eventType
 	}
 
 	return &settings, nil

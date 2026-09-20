@@ -5,19 +5,19 @@ import (
 
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/integrations/gitverse"
-	gvqueries "gitverse-notifier/pkg/queries/gitverse"
+	"gitverse-notifier/pkg/requests"
 )
 
 type GitversePullRequest struct {
-	queries *gvqueries.Queries
+	dispatcher *requests.RequestsDispatcher
 }
 
-func NewGitversePullRequest(queries *gvqueries.Queries) *GitversePullRequest {
-	return &GitversePullRequest{queries: queries}
+func NewGitversePullRequest(dispatcher *requests.RequestsDispatcher) *GitversePullRequest {
+	return &GitversePullRequest{dispatcher: dispatcher}
 }
 
 func (e *GitversePullRequest) Name() string {
-	return "gitverse.pull_request"
+	return "enricher.gitverse-pull-request"
 }
 
 func (e *GitversePullRequest) Skip(event *events.Event) bool {
@@ -36,7 +36,7 @@ func (e *GitversePullRequest) Enrich(ctx context.Context, event *events.Event) e
 		return nil
 	}
 
-	pr, err := e.queries.GetPullRequest(ctx, gvqueries.GetPullRequest{
+	pr, err := e.dispatcher.HandleGetPullRequestInfo(ctx, requests.GetPullRequestInfo{
 		Repo:      event.Repository,
 		Title:     event.PullRequest.Title,
 		Number:    event.PullRequest.Number,

@@ -3,18 +3,22 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"gitverse-notifier/pkg/cache"
 	"gitverse-notifier/pkg/config"
-	"gitverse-notifier/pkg/dispath"
-	"gitverse-notifier/pkg/dispath/handlers"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/enrichers"
+	"gitverse-notifier/pkg/handlers"
 	"gitverse-notifier/pkg/integrations/gitverse"
 	"gitverse-notifier/pkg/integrations/jira"
 	"gitverse-notifier/pkg/integrations/telegram"
 	"gitverse-notifier/pkg/logger"
-	gvqueries "gitverse-notifier/pkg/queries/gitverse"
+	"gitverse-notifier/pkg/pipeline"
+	"gitverse-notifier/pkg/requests"
 	"gitverse-notifier/pkg/server"
 	"gitverse-notifier/pkg/settings"
 	"gitverse-notifier/pkg/templates"
@@ -32,8 +36,34 @@ func main() {
 	flag.Parse()
 	config.Setup(configPath)
 	logger.SetupLogger(config.GlobalConfig)
-	ctx := context.Background()
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	p := buildEventPipeline(ctx)
+	p.StartWorkers(ctx)
+
+	s := server.NewHttpServer(p)
+	go runHttpServer(ctx, s)
+
+	<-ctx.Done()
+	logger.Info(ctx, "shutdown signal received")
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	if err := s.Shutdown(shutdownCtx); err != nil {
+		logger.Error(shutdownCtx, "http server shutdown failed", "err", err)
+	}
+
+	if err := p.Close(shutdownCtx); err != nil {
+		logger.Error(shutdownCtx, "pipeline shutdown failed", "err", err)
+	}
+
+	logger.Info(shutdownCtx, "shutdown complete")
+}
+
+func buildEventPipeline(ctx context.Context) *pipeline.Pipeline {
 	manager, err := settings.SetupSettingsManager()
 	if err != nil {
 		logger.Fatal(ctx, err)
@@ -54,31 +84,35 @@ func main() {
 		logger.Error(ctx, "failed to configure telegram client", "err", tgErr)
 	}
 
-	dispatcher := dispath.NewDispatcher(
-		manager,
-		handlers.NewJiraCommentIssue(jiraClient, engine),
-		handlers.NewTelegramNotify(tgClient, engine),
-		handlers.NewUtilsLog(),
-	)
-
-	eventEnrichers := make([]events.Enricher, 0, 3)
-
 	gitverseClient, gitverseErr := gitverse.NewClient()
 	if gitverseErr != nil {
 		logger.Error(ctx, "failed to configure gitverse client", "err", gitverseErr)
-	} else {
-		queries := gvqueries.New(gitverseClient, cache.NewMemoryPullRequestCache())
-		eventEnrichers = append(eventEnrichers, enrichers.NewGitversePullRequest(queries))
-		eventEnrichers = append(eventEnrichers, enrichers.NewGitverseCommit(queries))
 	}
 
-	eventEnrichers = append(eventEnrichers,
-		enrichers.NewJiraIssueKeys(manager),
-		enrichers.NewGitverseLinks(manager),
-		enrichers.NewTelegramLinks(manager),
-	)
+	eventEnrichers := make([]events.Enricher, 0, 5)
+	if gitverseClient != nil {
+		dispatcher := requests.NewRequestsDispather(gitverseClient, cache.NewMemoryPullRequestCache())
+		eventEnrichers = append(eventEnrichers, enrichers.NewGitversePullRequest(dispatcher))
+		eventEnrichers = append(eventEnrichers, enrichers.NewGitverseCommit(dispatcher))
+	}
 
-	proc := dispath.New(dispatcher, eventEnrichers...)
-	srv := server.NewHttpServer(proc)
-	logger.Fatal(ctx, srv.Run())
+	eventEnrichers = append(eventEnrichers, enrichers.NewJiraIssueKeys(manager))
+	eventEnrichers = append(eventEnrichers, enrichers.NewGitverseLinks(manager))
+	eventEnrichers = append(eventEnrichers, enrichers.NewTelegramLinks(manager))
+
+	return pipeline.BuildNewPipeline(
+		manager,
+		eventEnrichers,
+		handlers.NewJiraCommentIssue(jiraClient, engine),
+		handlers.NewJiraMentionAtWeb(jiraClient),
+		handlers.NewGitverseCreateComment(gitverseClient, engine),
+		handlers.NewTelegramNotify(tgClient, engine),
+		handlers.NewUtilsLog(),
+	)
+}
+
+func runHttpServer(ctx context.Context, s *server.HttpServer) {
+	if err := s.Run(); err != nil {
+		logger.Fatal(ctx, err)
+	}
 }

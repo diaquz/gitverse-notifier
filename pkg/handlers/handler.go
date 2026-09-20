@@ -1,12 +1,13 @@
-package dispath
+package handlers
 
 import (
 	"context"
 	"gitverse-notifier/pkg/events"
+	"gitverse-notifier/pkg/settings"
 )
 
 type ActionHandler interface {
 	Name() string
-	Run(ctx context.Context, ev events.Event, rule *events.ActionRule) error
+	Run(context.Context, *events.Event, *settings.ActionRule) error
 	Ready() bool
 }

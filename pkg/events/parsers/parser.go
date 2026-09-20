@@ -5,7 +5,7 @@ import (
 	"gitverse-notifier/pkg/events"
 )
 
-func ParseEvent(_ context.Context, eventName, eventTypeName string, body []byte) (event events.Event, err error) {
+func ParseEvent(_ context.Context, eventName, eventTypeName, requestId string, body []byte) (event events.Event, err error) {
 	if err := fillCommon(&event, body); err != nil {
 		return event, err
 	}
@@ -15,6 +15,7 @@ func ParseEvent(_ context.Context, eventName, eventTypeName string, body []byte)
 		return event, err
 	}
 	event.Type = event_type
+	event.RequestId = requestId
 
 	switch event.Type {
 	case events.PullRequestOpened, events.PullRequestClosed, events.PullRequestEdited, events.PullRequestSynchronized,

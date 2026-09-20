@@ -98,6 +98,17 @@ func JiraLink(text, link string) string {
 	return fmt.Sprintf("[%s|%s]", text, link)
 }
 
+func MarkdownLink(text, link string) string {
+	if link == "" {
+		return text
+	}
+	return fmt.Sprintf("[%s](%s)", text, link)
+}
+
+func MarkdownIssueURLs(keys []string) string {
+	return joinIssueURLs(keys, MarkdownLink)
+}
+
 func TelegramLink(text, link string) string {
 	text = TelegramEscape(text)
 	if link == "" {
@@ -115,25 +126,12 @@ func TelegramMention(actor events.Actor) string {
 	return TelegramLink(actor.Name, actor.URL)
 }
 
-func TelegramLastReviewer(reviewers []events.Actor) string {
-	reviewer, err := LastReviewer(reviewers)
-	if err != nil {
-		return ""
+func TelegramMentions(actors []events.Actor) string {
+	parts := make([]string, 0, len(actors))
+	for _, actor := range actors {
+		if m := TelegramMention(actor); m != "" {
+			parts = append(parts, m)
+		}
 	}
-	return TelegramMention(reviewer)
-}
-
-func JiraLastReviewer(reviewers []events.Actor) string {
-	reviewer, err := LastReviewer(reviewers)
-	if err != nil {
-		return ""
-	}
-	return JiraLink(reviewer.Name, reviewer.URL)
-}
-
-func LastReviewer(reviewers []events.Actor) (events.Actor, error) {
-	if len(reviewers) == 0 {
-		return events.Actor{}, fmt.Errorf("no reviewers")
-	}
-	return reviewers[len(reviewers)-1], nil
+	return strings.Join(parts, ", ")
 }

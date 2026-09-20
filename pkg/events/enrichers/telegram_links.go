@@ -15,7 +15,7 @@ func NewTelegramLinks(manager *settings.SettingsManager) *TelegramLinks {
 }
 
 func (e *TelegramLinks) Name() string {
-	return "telegram.links"
+	return "enricher.telegram-links"
 }
 
 func (e *TelegramLinks) Skip(event *events.Event) bool {

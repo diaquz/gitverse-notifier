@@ -6,6 +6,7 @@ import (
 
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
+	"gitverse-notifier/pkg/settings"
 )
 
 type UtilsLog struct{}
@@ -22,7 +23,7 @@ func (a *UtilsLog) Ready() bool {
 	return true
 }
 
-func (a *UtilsLog) Run(ctx context.Context, ev events.Event, rule *events.ActionRule) error {
+func (a *UtilsLog) Run(ctx context.Context, ev *events.Event, rule *settings.ActionRule) error {
 	logger.Info(ctx, "event log",
 		"action", a.Name(),
 		"event", ev.Type,

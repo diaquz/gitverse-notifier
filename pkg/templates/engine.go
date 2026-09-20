@@ -29,7 +29,7 @@ type Data struct {
 	IssueKeys     []string
 }
 
-func DataFromEvent(ev events.Event) Data {
+func DataFromEvent(ev *events.Event) Data {
 	return Data{
 		Type:          string(ev.Type),
 		Action:        ev.Action,
@@ -58,14 +58,14 @@ func funcMap() template.FuncMap {
 		"trim":             strings.TrimSpace,
 		"join":             strings.Join,
 		"jiraLink":         JiraLink,
+		"mdLink":           MarkdownLink,
 		"tgLink":           TelegramLink,
 		"issueURL":         IssueURL,
 		"tgIssueURLs":      TelegramIssueURLs,
+		"mdIssueURLs":      MarkdownIssueURLs,
 		"jiraIssueURLs":    JiraIssueURLs,
-		"lastReviewer":     LastReviewer,
 		"tgMention":        TelegramMention,
-		"tgLastReviewer":   TelegramLastReviewer,
-		"jiraLastReviewer": JiraLastReviewer,
+		"tgMentions":       TelegramMentions,
 	}
 }
 
@@ -98,7 +98,7 @@ func SetupTemplateEngine() (*Engine, error) {
 			return nil, fmt.Errorf("failed to parse template %s: %w", path, err)
 		}
 
-		logger.Debug(nil, "template registered", "action", "templates_setup", "template", name, "path", path)
+		logger.Debug(nil, "template registered", "action", "templates.setup", "template", name, "path", path)
 	}
 
 	return &Engine{engine: root}, nil
