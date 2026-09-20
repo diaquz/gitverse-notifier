@@ -51,7 +51,7 @@ func (m *SettingsManager) SettingsByRepository(repository string) *RepositorySet
 
 
 func SetupSettingsManager() (*SettingsManager, error) {
-	settingsDir := config.GlobalConfig.RepositoriesDirPath
+	settingsDir := config.GlobalConfig.ConfigsDirPath
 	entries, err := os.ReadDir(settingsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read settings dir %s: %w", settingsDir, err)
@@ -132,12 +132,12 @@ func loadRepositorySettings(path string) (*RepositorySettings, error) {
 		settings.Actions[i].On = eventType
 	}
 
-	for i := range settings.Batches {
-		eventType, ok := events.ParseEventType(settings.Batches[i].EventRaw)
+	for i := range settings.Groups {
+		eventType, ok := events.ParseEventType(settings.Groups[i].EventRaw)
 		if !ok {
-			return nil, fmt.Errorf("batch for unknown event '%s' in %q", settings.Batches[i].EventRaw, path)
+			return nil, fmt.Errorf("group for unknown event '%s' in %q", settings.Groups[i].EventRaw, path)
 		}
-		settings.Batches[i].Event = eventType
+		settings.Groups[i].Event = eventType
 	}
 
 	return &settings, nil

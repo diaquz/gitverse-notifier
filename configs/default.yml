@@ -1,30 +1,85 @@
 repository: any
 
-# Базовый URL gitverse для ссылок в уведомлениях.
-# Пустое значение — берётся GITVERSE_BASE_URL из глобального конфига.
-url: ""
-
 # Разрешённые коды проектов Jira
 # Пустой список — без ограничений.
 allowed_jira_projects:
   - JIRA
   - TEST
 
+# Маппинг логинов из gitverse в логины из telegram,
+# можно использовать с помощью функций tgMention / tgMentions в шаблонах сообщений
 telegram_tags:
   test: test
 
-event_batches:
-  - key: events_batch
-    group_by: pull_request_batch
-    strategy: use_last_event
-    event: pull_request.review_requested
-    size: 5
-    ttl: 60
+# Доступные события - ТОЛЬКО ДЛЯ СПРАВКИ
+available_events:
+  - type: pull_request.opened
+    description: PR открыт
+  
+  - type: pull_request.closed
+    description: PR закрыт
+  
+  - type: pull_request.edited
+    description: PR обновлен
+  
+  - type: pull_request.synchronized
+    description: PR синхронизирован, обычно при пуше новых комитов в ветку
+  
+  - type: pull_request.review_requested
+    description: Запрошено ревью PR, не содержит информацию о ревьювере
+  
+  - type: pull_request.review_approved
+    description: PR одобрен
 
+  - type: pull_request.review_rejected
+    description: Запрошены правки для PR
+
+  - type: pull_request.review_comment
+    description: Для PR оставлен комментарий, самого комментария не содержит
+
+  - type: pull_request.comment
+    description: Для PR или issue оставлен комментарий
+
+  - type: branch.push
+    description: Ветка обновлена
+
+  - type: branch.created
+    description: Создана новая ветка
+
+  - type: branch.deleted
+    description: Ветка удалена
+
+  - type: cicd.status
+    description: Обновление состояния cicd (pending / success / failure)
+
+# Доступные действия - ТОЛЬКО ДЛЯ СПРАВКИ
+available_actions:
+  - type: jira.comment_issue
+    description: Создает комментарии для каждой задачи, упомянутой в событии
+
+  - type: telegram.notify
+    description: Отправляет сообщение в telegram
+
+  - type: utils.log
+    description: Просто логирует основную информацию о событии
+
+# События, которые нужно группировать перед обработкой
+event_groups:
+  # Пример:
+  #   Так как gitverse не присылает имя ревьювера в review_requested, а так же не имеет отдельного ивента для удаления ревьювера,
+  #   то мы группируем все запросы на ревью в течение 60 секунд и отправляем уведомление только для последнего
+  - key: events_group # Ключ группы
+    group_by: group.pull_request # Способ группировки событий (имя репозитория + номер PR)
+    strategy: strategy.use_last_event # Стратегия обработки событий - использовать последний ивент
+    event: pull_request.review_requested # Собираемый тип событий
+    size: 99 # ограничение по кол-ву событий в группе
+    ttl: 60 # Время жизни группы, в секундах
+
+# Список действий, выполняемых при получении событий
 action_rules:
-  - on: pull_request.opened
-    action: jira.comment_issue
-    template: jira/pr_opened
+  - on: pull_request.opened # Тип события
+    action: jira.comment_issue # Действие
+    template: jira/pr_opened # Имя шаблона (из templates/)
 
   - on: pull_request.opened
     action: telegram.notify
@@ -34,15 +89,9 @@ action_rules:
     action: utils.log
 
   - on: pull_request.closed
-    state: merged
-    action: telegram/pr_merged
-
-  - on: pull_request.closed
-    state: closed
-    action: utils.log
-
-  - on: pull_request.synchronized
-    action: utils.log
+    state: merged # Фильтрация по статусу закрытого PR (merged / closed)
+    action: telegram.notify
+    template: telegram/pr_merged
 
   - on: pull_request.review_requested
     action: telegram.notify
@@ -54,7 +103,7 @@ action_rules:
 
   - on: pull_request.comment
     action: telegram.notify
-    skip_empty: true
+    skip_empty: true # Пропускать уведомление, если тело комментария пустое
     template: telegram/pr_comment
 
   - on: branch.push

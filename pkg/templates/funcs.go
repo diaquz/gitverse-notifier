@@ -124,26 +124,3 @@ func TelegramMentions(actors []events.Actor) string {
 	}
 	return strings.Join(parts, ", ")
 }
-
-func TelegramLastReviewer(reviewers []events.Actor) string {
-	reviewer, err := LastReviewer(reviewers)
-	if err != nil {
-		return ""
-	}
-	return TelegramMention(reviewer)
-}
-
-func JiraLastReviewer(reviewers []events.Actor) string {
-	reviewer, err := LastReviewer(reviewers)
-	if err != nil {
-		return ""
-	}
-	return JiraLink(reviewer.Name, reviewer.URL)
-}
-
-func LastReviewer(reviewers []events.Actor) (events.Actor, error) {
-	if len(reviewers) == 0 {
-		return events.Actor{}, fmt.Errorf("no reviewers")
-	}
-	return reviewers[len(reviewers)-1], nil
-}

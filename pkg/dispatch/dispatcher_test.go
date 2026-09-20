@@ -68,7 +68,7 @@ func setupTestManager(t *testing.T, yamlContents ...string) *settings.SettingsMa
 
 	prev := config.GlobalConfig
 	config.GlobalConfig = &config.Config{
-		RepositoriesDirPath: dir,
+		ConfigsDirPath: dir,
 		GitverseBaseURL:     "https://gitverse.example",
 	}
 	t.Cleanup(func() { config.GlobalConfig = prev })

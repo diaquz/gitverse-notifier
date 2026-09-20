@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type BatchSetting struct {
+type EventGroupSettings struct {
 	Key      string           `yaml:"key"`
 	GroupBy  string           `yaml:"group_by"`
 	Strategy string           `yaml:"strategy"`
@@ -17,17 +17,17 @@ type BatchSetting struct {
 	TTL      int              `yaml:"ttl"`
 }
 
-func (b *BatchSetting) TTLTime() time.Duration {
+func (b *EventGroupSettings) TTLTime() time.Duration {
 	return time.Duration(b.TTL) * time.Second
 }
 
 // RepositorySettings хранит настройки конкретного репозитория
 type RepositorySettings struct {
-	Repository          string            `yaml:"repository"`
-	AllowedJiraProjects []string          `yaml:"allowed_jira_projects"`
-	Actions             []ActionRule      `yaml:"action_rules"`
-	Batches             []BatchSetting    `yaml:"event_batches"`
-	TelegramTags        map[string]string `yaml:"telegram_tags"`
+	Repository          string               `yaml:"repository"`
+	AllowedJiraProjects []string             `yaml:"allowed_jira_projects"`
+	Actions             []ActionRule         `yaml:"action_rules"`
+	Groups              []EventGroupSettings `yaml:"event_groups"`
+	TelegramTags        map[string]string    `yaml:"telegram_tags"`
 }
 
 // IsJiraCodeAllowed проверяет, разрешён ли код проекта Jira
@@ -77,10 +77,10 @@ func (s *RepositorySettings) RenderActionsCodes() string {
 	return strings.Join(codes, ", ")
 }
 
-func (s *RepositorySettings) FindBatchSettings(event *events.Event) *BatchSetting {
-	for i := range len(s.Batches) {
-		if s.Batches[i].Event == event.Type {
-			return &s.Batches[i]
+func (s *RepositorySettings) FindEventGroupSettings(event *events.Event) *EventGroupSettings {
+	for i := range len(s.Groups) {
+		if s.Groups[i].Event == event.Type {
+			return &s.Groups[i]
 		}
 	}
 

@@ -8,11 +8,11 @@ import (
 	"gitverse-notifier/pkg/logger"
 )
 
-const batchExpireCheckInterval = time.Second
+const groupExpireCheckInterval = time.Second
 
 func (p *Pipeline) StartWorkers(ctx context.Context) {
 	p.wg.Add(1)
-	go p.startBatchesChecker(ctx)
+	go p.startGroupsChecker(ctx)
 
 	for i := 0; i < config.GlobalConfig.EventWorkerCount; i++ {
 		logger.Debug(ctx, "starting queue worker", "worker", i)
@@ -21,10 +21,10 @@ func (p *Pipeline) StartWorkers(ctx context.Context) {
 	}
 }
 
-func (p *Pipeline) startBatchesChecker(ctx context.Context) {
+func (p *Pipeline) startGroupsChecker(ctx context.Context) {
 	defer p.wg.Done()
 
-	ticker := time.NewTicker(batchExpireCheckInterval)
+	ticker := time.NewTicker(groupExpireCheckInterval)
 	defer ticker.Stop()
 
 	for {
@@ -32,12 +32,12 @@ func (p *Pipeline) startBatchesChecker(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			expired := p.batches.PopExpired(ctx, time.Now())
+			expired := p.groups.PopExpiredGroups(ctx, time.Now())
 
 			for _, event := range expired {
 				logger.Debug(ctx, "enqueue expired event", "event", event.Type, "repository", event.Repository)
 				if err := p.queue.Enqueue(ctx, event); err != nil {
-					logger.Error(ctx, "failed to enqueue expired batch event",
+					logger.Error(ctx, "failed to enqueue expired group event",
 						"event", event.Type, "repository", event.Repository, "err", err)
 				}
 			}
@@ -66,5 +66,20 @@ func (p *Pipeline) startWorker(ctx context.Context, id int) {
 		logger.Info(eventCtx, "queue worker processed event",
 			"time", time.Since(start).Milliseconds(),
 			"worker", id, "event", event.Type, "repository", event.Repository)
+	}
+}
+
+func (p *Pipeline) waitWorkers(ctx context.Context) error {
+	done := make(chan struct{})
+	go func() {
+		p.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
 	}
 }

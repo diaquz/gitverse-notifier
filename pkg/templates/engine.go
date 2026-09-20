@@ -62,11 +62,8 @@ func funcMap() template.FuncMap {
 		"issueURL":         IssueURL,
 		"tgIssueURLs":      TelegramIssueURLs,
 		"jiraIssueURLs":    JiraIssueURLs,
-		"lastReviewer":     LastReviewer,
 		"tgMention":        TelegramMention,
 		"tgMentions":       TelegramMentions,
-		"tgLastReviewer":   TelegramLastReviewer,
-		"jiraLastReviewer": JiraLastReviewer,
 	}
 }
 

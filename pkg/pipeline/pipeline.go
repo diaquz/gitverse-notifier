@@ -9,7 +9,7 @@ import (
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
 	"gitverse-notifier/pkg/queue"
-	"gitverse-notifier/pkg/queue/batches"
+	"gitverse-notifier/pkg/queue/groups"
 	"gitverse-notifier/pkg/settings"
 )
 
@@ -18,7 +18,7 @@ type Pipeline struct {
 	enrichers  []events.Enricher
 	dispatcher dispatch.EventDispatcher
 	queue      queue.EventQueue
-	batches    queue.BatchesManager
+	groups    queue.EventGroupsManager
 
 	wg        sync.WaitGroup
 	closeOnce sync.Once
@@ -33,7 +33,7 @@ func BuildNewPipeline(
 
 	return &Pipeline{
 		queue:      queue.NewMemoryQueue(cfg.EventQueueSize),
-		batches:    batches.NewInMemoryBatchesManager(manager),
+		groups:    groups.NewInMemoryEventGroupsManager(manager),
 		enrichers:  enrichers,
 		manager:    manager,
 		dispatcher: dispatcher,
@@ -42,15 +42,15 @@ func BuildNewPipeline(
 
 // Enqueue ставит событие в очередь, если событие нужно группировать - пытается добавить в группу
 func (p *Pipeline) Enqueue(ctx context.Context, event *events.Event) error {
-	key, ok := p.batches.Add(ctx, event)
+	key, ok := p.groups.Add(ctx, event)
 	if !ok {
 		return p.queue.Enqueue(ctx, event)
 	}
 
-	if events, ok := p.batches.TryProcessBucket(ctx, key); ok {
+	if events, ok := p.groups.TryProcessGroup(ctx, key); ok {
 		for _, event := range events {
 			if err := p.queue.Enqueue(ctx, event); err != nil {
-				logger.Error(ctx, "failed to enqueue batch event",
+				logger.Error(ctx, "failed to enqueue group event",
 					"event", event.Type, "repository", event.Repository,
 					"err", err)
 			}
@@ -94,7 +94,7 @@ func (p *Pipeline) Enrich(ctx context.Context, event *events.Event) {
 }
 
 func (p *Pipeline) Close(ctx context.Context) error {
-	closeErr := p.flushBatches(ctx)
+	closeErr := p.flushGroups(ctx)
 	workersErr := p.waitWorkers(ctx)
 
 	if closeErr != nil {
@@ -104,14 +104,14 @@ func (p *Pipeline) Close(ctx context.Context) error {
 	return workersErr
 }
 
-func (p *Pipeline) flushBatches(ctx context.Context) (closeErr error) {
+func (p *Pipeline) flushGroups(ctx context.Context) (closeErr error) {
 	p.closeOnce.Do(func() {
-		for _, event := range p.batches.PopAll(ctx) {
-			logger.Debug(ctx, "enqueue flushed batch event",
+		for _, event := range p.groups.PopAllGroups(ctx) {
+			logger.Debug(ctx, "enqueue flushed group event",
 				"event", event.Type, "repository", event.Repository)
 
 			if err := p.queue.EnqueueBlocking(ctx, event); err != nil {
-				logger.Error(ctx, "failed to enqueue flushed batch event",
+				logger.Error(ctx, "failed to enqueue flushed group event",
 					"event", event.Type, "repository", event.Repository, "err", err)
 				closeErr = err
 			}
@@ -121,19 +121,4 @@ func (p *Pipeline) flushBatches(ctx context.Context) (closeErr error) {
 	})
 
 	return
-}
-
-func (p *Pipeline) waitWorkers(ctx context.Context) error {
-	done := make(chan struct{})
-	go func() {
-		p.wg.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
-	}
 }

@@ -29,13 +29,20 @@ docker compose up -d
 
 | Ключ | Описание | Значение по умолчанию |
 |---|---|---|
+| `CONFIGS_DIR_PATH` | Путь к каталогу с конфигами | `configs/` |
+| `TEMPLATES_DIR_PATH` | Путь к каталогу с шаблонами | `templates/` |
+| `TEMPLATES_PATTERN` | Патерн, по которому происходит поиск шаблонов | `**/*.tmp` |
+| `GITVERSE_BASE_URL` | Ссылка на гитверс для использования в уведомлениях | — |
 | `BIND_HOST` | Хост | `0.0.0.0` |
 | `HTTPD_PORT` | Порт | `9001` |
+| `BASIC_AUTH_USER` | Пользователь для базовой аутентификации | — |
+| `BASIC_AUTH_PASSWORD` | Пароль для базовой аутентификации | — |
 | `LOG_LEVEL` | Уровень логирования | `INFO` |
 | `LOG_FILE_NAME` | Имя файла с логами | `gitverse-notifier.log` |
-| `LOG_MAX_SIZE` | Максимальный размер файла с логами (МБ) | 15 |
-| `LOG_MAX_AGE` | Максимальный возвраст логов (дней)  | 7 |
-| `LOG_FORMAT_JSON` | Форматировать ли логи в JSON  | false |
+| `LOG_MAX_SIZE` | Максимальный размер файла с логами (МБ) | `15` |
+| `LOG_MAX_AGE` | Максимальный возвраст логов (дней)  | `7` |
+| `LOG_FORMAT_JSON` | Форматировать ли логи в JSON  | `false` |
+| `LOG_REQUESTS` | Логировать ли body для всех входящих событий  | `false` |
 | `JIRA_URL` | URL для Jira | — |
 | `JIRA_TOKEN` | Токен для Jira | — |
 | `JIRA_USERNAME` / `JIRA_PASSWORD` | Логин и пароль для джиры - альтернатива токену | — |
@@ -45,7 +52,12 @@ docker compose up -d
 | `TELEGRAM_PROXY_URL` | HTTP прокси для Telegram (опционально) | — |
 | `TELEGRAM_PARSE_MODE` | Режим парсинга сообщения `Markdown` / `MarkdownV2` / `HTML` | `MarkdownV2` |
 | `GITVERSE_BASE_URL` | Ссылка на гитверс для использования в уведомлениях | — |
-
+| `GITVERSE_API_URL` | Адрес публичного API gitverse | — |
+| `GITVERSE_API_TOKEN` | Токен для публичного API gitverse | — |
+| `CACHE_TTL` | Время кеширования информации о PR (в минутах) | `60` |
+| `EVENT_QUEUE_SIZE` | Размер очереди событий | `256` |
+| `EVENT_WORKER_COUNT` | Кол-во воркеров (горутин), разбирающих очередь событий | `8` |
+| `ENABLE_PPROF` | Доступен ли API для pprof | `false` |
 
 ## Конфигурация репозиториев
 
@@ -53,12 +65,23 @@ docker compose up -d
 
 ```yaml
 repository: any
-# Базовый URL gitverse для ссылок
-url: ""
 # Коды проектов Jira
 allowed_jira_projects:
   - JIRA
   - TEST
+
+# События, которые нужно группировать перед обработкой
+event_groups:
+  # Пример:
+  #   Так как gitverse не присылает имя ревьювера в review_requested, а так же не имеет отдельного ивента для удаления ревьювера,
+  #   то мы группируем все запросы на ревью в течение 60 секунд и отправляем уведомление только для последнего
+  - key: events_group # Ключ группы
+    group_by: group.pull_request # Способ группировки событий (имя репозитория + номер PR)
+    strategy: strategy.use_last_event # Стратегия обработки событий - использовать последний ивент
+    event: pull_request.review_requested # Собираемый тип событий
+    size: 99 # ограничение по кол-ву событий в группе
+    ttl: 60 # Время жизни группы, в секундах
+
 action_rules:
   - on: pull_request.opened # Код события
     action: jira.comment_issue # Код действия
@@ -115,8 +138,7 @@ action_rules:
 
 Имена шаблонов можно указываться в action->template.
 
-Доступные хелперы: `tgLink`, `jiraLink`, `IssueURL`, `tgIssueURLs`, `jiraIssueURLs`, `join`, `trim`, `jiraEscape`.
-
+Доступные хелперы: `tgMention`, `tgMentions`, `tgLink`, `tgIssueURLs`,  `jiraLink`, `jiraIssueURLs`, `IssueURL`, `tgIssueURLs`, `jiraIssueURLs`, `join`, `trim`, `jiraEscape`.
 Пример шаблона
 
 ```

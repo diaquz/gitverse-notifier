@@ -1,4 +1,4 @@
-package batches
+package groups
 
 import (
 	"fmt"
@@ -10,10 +10,10 @@ type GroupType interface {
 	Key(event *events.Event) string
 }
 
-type PullRequestBatch struct{}
+type PullRequestGroup struct{}
 
-func (PullRequestBatch) Name() string { return "pull_request_batch" }
+func (PullRequestGroup) Name() string { return "group.pull_request" }
 
-func (PullRequestBatch) Key(event *events.Event) string {
+func (PullRequestGroup) Key(event *events.Event) string {
 	return fmt.Sprintf("%s|%d", event.Repository, event.PullRequest.Number)
 }

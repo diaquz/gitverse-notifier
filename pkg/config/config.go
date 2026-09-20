@@ -25,7 +25,6 @@ type Config struct {
 	ConfigsDirPath      string `mapstructure:"CONFIGS_DIR_PATH"`
 	TemplatesDirPath    string `mapstructure:"TEMPLATES_DIR_PATH"`
 	TemplatesPattern    string `mapstructure:"TEMPLATES_PATTERN"`
-	RepositoriesDirPath string `mapstructure:"REPOSITORIES_DIR_PATH"`
 
 	BasicAuthUser     string `mapstructure:"BASIC_AUTH_USER"`
 	BasicAuthPassword string `mapstructure:"BASIC_AUTH_PASSWORD"`
@@ -90,7 +89,6 @@ func getDefaultConfig() Config {
 		LogMaxAge:           7,
 		ConfigsDirPath:      settingsPath,
 		TemplatesDirPath:    templatesPath,
-		RepositoriesDirPath: settingsPath,
 		BindHost:            "0.0.0.0",
 		HTTPPort:            "9001",
 		LogLevel:            "INFO",
@@ -100,7 +98,7 @@ func getDefaultConfig() Config {
 		TelegramParseMode:   "MarkdownV2",
 		CacheTTL:            60,
 		EventQueueSize:      256,
-		EventWorkerCount:    5,
+		EventWorkerCount:    8,
 		EnablePprof:         false,
 	}
 }

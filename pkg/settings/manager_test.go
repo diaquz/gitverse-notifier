@@ -296,7 +296,7 @@ action_rules:
 		require.NoError(t, os.WriteFile(filepath.Join(dir, "notes.txt"), []byte("ignore me"), 0o644))
 
 		config.GlobalConfig = &config.Config{
-			RepositoriesDirPath: dir,
+			ConfigsDirPath: dir,
 			GitverseBaseURL:     "https://gitverse.example",
 		}
 
@@ -325,7 +325,7 @@ repository: org/app
 action_rules: []
 `), 0o644))
 
-		config.GlobalConfig = &config.Config{RepositoriesDirPath: dir}
+		config.GlobalConfig = &config.Config{ConfigsDirPath: dir}
 
 		manager, err := SetupSettingsManager()
 		assert.Nil(t, manager)
@@ -335,7 +335,7 @@ action_rules: []
 
 	t.Run("fails when settings directory is missing", func(t *testing.T) {
 		config.GlobalConfig = &config.Config{
-			RepositoriesDirPath: filepath.Join(t.TempDir(), "does-not-exist"),
+			ConfigsDirPath: filepath.Join(t.TempDir(), "does-not-exist"),
 		}
 
 		manager, err := SetupSettingsManager()
@@ -357,7 +357,7 @@ action_rules:
     action: utils.log
 `), 0o644))
 
-		config.GlobalConfig = &config.Config{RepositoriesDirPath: dir}
+		config.GlobalConfig = &config.Config{ConfigsDirPath: dir}
 
 		manager, err := SetupSettingsManager()
 		assert.Nil(t, manager)

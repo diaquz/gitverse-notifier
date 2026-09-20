@@ -9,20 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestLastReviewerLinks(t *testing.T) {
-	config.GlobalConfig = &config.Config{TelegramParseMode: "MarkdownV2"}
-
-	reviewers := []events.Actor{
-		{Name: "first", URL: "https://git.example/u/first"},
-		{Name: "last", URL: "https://git.example/u/last"},
-	}
-
-	require.Equal(t, "[last](https://git.example/u/last)", TelegramLastReviewer(reviewers))
-	require.Equal(t, "[last|https://git.example/u/last]", JiraLastReviewer(reviewers))
-	require.Equal(t, "", TelegramLastReviewer(nil))
-	require.Equal(t, "", JiraLastReviewer(nil))
-}
-
 func TestTelegramMention(t *testing.T) {
 	config.GlobalConfig = &config.Config{TelegramParseMode: "MarkdownV2"}
 
@@ -34,12 +20,6 @@ func TestTelegramMention(t *testing.T) {
 		URL:  "https://git.example/u/alice",
 	}))
 	require.Equal(t, "", TelegramMention(events.Actor{}))
-
-	reviewers := []events.Actor{
-		{Name: "first", URL: "https://git.example/u/first"},
-		{Name: "last", URL: "https://git.example/u/last", TgTag: "last_tg"},
-	}
-	require.Equal(t, "@last\\_tg", TelegramLastReviewer(reviewers))
 }
 
 func TestTelegramMentions(t *testing.T) {
