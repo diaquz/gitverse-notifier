@@ -1,25 +1,27 @@
 package settings
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
+	"sync"
 
-	"gitverse-notifier/pkg/config"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/logger"
-
-	"gopkg.in/yaml.v3"
 )
 
 const (
 	DefaultRepository = "any"
 )
 
+// RepositorySettingsLoader loads all repository settings (typically from a store).
+type RepositorySettingsLoader interface {
+	List(ctx context.Context) ([]*RepositorySettings, error)
+}
+
 type SettingsManager struct {
+	mu             sync.RWMutex
 	mapping        map[string]*RepositorySettings
-	defaultSetting RepositorySettings
+	defaultSetting *RepositorySettings
 }
 
 func (m *SettingsManager) IsJiraCodeAllowed(repository, code string) bool {
@@ -43,102 +45,69 @@ func (m *SettingsManager) HasPotentialActions(repository string, event *events.E
 }
 
 func (m *SettingsManager) SettingsByRepository(repository string) *RepositorySettings {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
 	if settings, ok := m.mapping[repository]; ok {
 		return settings
 	}
-	return &m.defaultSetting
+	return m.defaultSetting
 }
 
-
-func SetupSettingsManager() (*SettingsManager, error) {
-	settingsDir := config.GlobalConfig.ConfigsDirPath
-	entries, err := os.ReadDir(settingsDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read settings dir %s: %w", settingsDir, err)
-	}
-
+// NewSettingsManagerFromLoader builds a manager from the full settings list.
+func NewSettingsManagerFromLoader(ctx context.Context, loader RepositorySettingsLoader) (*SettingsManager, error) {
 	manager := &SettingsManager{
 		mapping: make(map[string]*RepositorySettings),
 	}
-
-	var defaultSettingsInitialized bool
-	for _, entry := range entries {
-		name := entry.Name()
-
-		if entry.IsDir() {
-			logger.Debug(nil, "directory skipped", "action", "settings.setup", "name", name)
-			continue
-		}
-		if !strings.HasSuffix(name, ".yml") && !strings.HasSuffix(name, ".yaml") {
-			logger.Debug(nil, "config file skipped", "action", "settings.setup", "name", name)
-			continue
-		}
-
-		path := filepath.Join(settingsDir, name)
-		settings, err := loadRepositorySettings(path)
-		if err != nil {
-			return nil, err
-		}
-
-		if settings.Repository == DefaultRepository {
-			manager.defaultSetting = *settings
-			defaultSettingsInitialized = true
-			logger.Debug(nil, "loaded default repository settings",
-				"action", "settings.setup",
-				"name", name,
-				"actions", manager.defaultSetting.RenderActionsCodes())
-			continue
-		}
-
-		manager.mapping[settings.Repository] = settings
-		logger.Debug(nil, "loaded repository settings",
-			"action", "settings.setup",
-			"name", name,
-			"repository", settings.Repository,
-			"actions", settings.RenderActionsCodes())
+	if err := manager.Reload(ctx, loader); err != nil {
+		return nil, err
 	}
-
-	if !defaultSettingsInitialized {
-		return nil, fmt.Errorf("default repository config (repository: any) is missing")
-	}
-
 	return manager, nil
 }
 
-func loadRepositorySettings(path string) (*RepositorySettings, error) {
-	data, err := os.ReadFile(path)
+// Reload replaces in-memory settings from the loader.
+func (m *SettingsManager) Reload(ctx context.Context, loader RepositorySettingsLoader) error {
+	repos, err := loader.List(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read %s: %w", path, err)
+		return err
 	}
+	return m.ReplaceAll(repos)
+}
 
-	var settings RepositorySettings
-	if err := yaml.Unmarshal(data, &settings); err != nil {
-		return nil, fmt.Errorf("failed to parse repository settings %s: %w", path, err)
-	}
+// ReplaceAll atomically replaces the in-memory repository mapping.
+func (m *SettingsManager) ReplaceAll(repos []*RepositorySettings) error {
+	mapping := make(map[string]*RepositorySettings, len(repos))
+	var defaultSetting *RepositorySettings
 
-	if settings.Repository == "" {
-		return nil, fmt.Errorf("repository name is required in %s", path)
-	}
-
-	for i, code := range settings.AllowedJiraProjects {
-		settings.AllowedJiraProjects[i] = strings.ToUpper(strings.TrimSpace(code))
-	}
-
-	for i := range settings.Actions {
-		eventType, ok := events.ParseEventType(settings.Actions[i].OnCode)
-		if !ok {
-			return nil, fmt.Errorf("action for unknown event '%s' in %q", settings.Actions[i].OnCode, path)
+	for _, repo := range repos {
+		if repo == nil {
+			continue
 		}
-		settings.Actions[i].On = eventType
-	}
-
-	for i := range settings.Groups {
-		eventType, ok := events.ParseEventType(settings.Groups[i].EventRaw)
-		if !ok {
-			return nil, fmt.Errorf("group for unknown event '%s' in %q", settings.Groups[i].EventRaw, path)
+		normalized, err := NormalizeRepositorySettings(*repo)
+		if err != nil {
+			return err
 		}
-		settings.Groups[i].Event = eventType
+		copy := normalized
+		if copy.Repository == DefaultRepository {
+			defaultSetting = &copy
+			continue
+		}
+		mapping[copy.Repository] = &copy
 	}
 
-	return &settings, nil
+	if defaultSetting == nil {
+		return fmt.Errorf("default repository config (repository: %s) is missing", DefaultRepository)
+	}
+
+	m.mu.Lock()
+	m.mapping = mapping
+	m.defaultSetting = defaultSetting
+	m.mu.Unlock()
+
+	logger.Debug(nil, "settings manager reloaded",
+		"action", "settings.reload",
+		"repositories", len(mapping)+1,
+		"default_actions", defaultSetting.RenderActionsCodes())
+
+	return nil
 }

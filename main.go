@@ -10,6 +10,7 @@ import (
 
 	"gitverse-notifier/pkg/cache"
 	"gitverse-notifier/pkg/config"
+	"gitverse-notifier/pkg/db"
 	"gitverse-notifier/pkg/events"
 	"gitverse-notifier/pkg/events/enrichers"
 	"gitverse-notifier/pkg/handlers"
@@ -21,6 +22,7 @@ import (
 	"gitverse-notifier/pkg/requests"
 	"gitverse-notifier/pkg/server"
 	"gitverse-notifier/pkg/settings"
+	"gitverse-notifier/pkg/store"
 	"gitverse-notifier/pkg/templates"
 )
 
@@ -64,7 +66,17 @@ func main() {
 }
 
 func buildEventPipeline(ctx context.Context) *pipeline.Pipeline {
-	manager, err := settings.SetupSettingsManager()
+	database, err := db.Open(config.GlobalConfig.DatabasePath)
+	if err != nil {
+		logger.Fatal(ctx, err)
+	}
+
+	settingsStore := store.NewRepositorySettingsStore(database)
+	if err := db.SeedIfEmpty(ctx, settingsStore, config.GlobalConfig.SeedsDirPath); err != nil {
+		logger.Fatal(ctx, err)
+	}
+
+	manager, err := settings.NewSettingsManagerFromLoader(ctx, settingsStore)
 	if err != nil {
 		logger.Fatal(ctx, err)
 	}

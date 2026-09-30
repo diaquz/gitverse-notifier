@@ -12,6 +12,7 @@ ENV GO111MODULE=on
 
 WORKDIR /opt/gitverse_notifier
 COPY pkg pkg
+COPY db db
 COPY go* .
 COPY main.go .
 COPY config.yml.example .
@@ -27,7 +28,8 @@ RUN make build -s COMMIT=${COMMIT} VERSION=${VERSION} \
 RUN mkdir /opt/gitverse_notifier/release \
     && mv /opt/gitverse_notifier/config.yml.example /opt/gitverse_notifier/release \
     && mv /opt/gitverse_notifier/entrypoint.sh /opt/gitverse_notifier/release \
-    && chmod 755 /opt/gitverse_notifier/release/entrypoint.sh 
+    && chmod 755 /opt/gitverse_notifier/release/entrypoint.sh \
+    && cp -a /opt/gitverse_notifier/db /opt/gitverse_notifier/release/db 
 
 FROM debian:trixie
 ARG TARGETARCH

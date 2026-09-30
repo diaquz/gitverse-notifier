@@ -22,9 +22,10 @@ type Config struct {
 	LogFormatJson bool   `mapstructure:"LOG_FORMAT_JSON"`
 	LogRequests   bool   `mapstructure:"LOG_REQUESTS"`
 
-	ConfigsDirPath      string `mapstructure:"CONFIGS_DIR_PATH"`
-	TemplatesDirPath    string `mapstructure:"TEMPLATES_DIR_PATH"`
-	TemplatesPattern    string `mapstructure:"TEMPLATES_PATTERN"`
+	DatabasePath     string `mapstructure:"DATABASE_PATH"`
+	SeedsDirPath     string `mapstructure:"SEEDS_DIR_PATH"`
+	TemplatesDirPath string `mapstructure:"TEMPLATES_DIR_PATH"`
+	TemplatesPattern string `mapstructure:"TEMPLATES_PATTERN"`
 
 	BasicAuthUser     string `mapstructure:"BASIC_AUTH_USER"`
 	BasicAuthPassword string `mapstructure:"BASIC_AUTH_PASSWORD"`
@@ -73,9 +74,10 @@ func getDefaultConfig() Config {
 	logDirPath := filepath.Join(dataFolderPath, "logs")
 
 	templatesPath := filepath.Join(rootPath, "templates")
-	settingsPath := filepath.Join(rootPath, "configs")
+	seedsPath := filepath.Join(rootPath, "db", "seeds")
+	databasePath := filepath.Join(dataFolderPath, "app.db")
 
-	folders := []string{dataFolderPath, logDirPath, templatesPath, settingsPath}
+	folders := []string{dataFolderPath, logDirPath, templatesPath}
 	for i := range folders {
 		if err := EnsureDirExist(folders[i]); err != nil {
 			log.Fatalf("Create folder failed: %s", err.Error())
@@ -87,7 +89,8 @@ func getDefaultConfig() Config {
 		LogDirPath:          logDirPath,
 		LogMaxSize:          15,
 		LogMaxAge:           7,
-		ConfigsDirPath:      settingsPath,
+		DatabasePath:        databasePath,
+		SeedsDirPath:        seedsPath,
 		TemplatesDirPath:    templatesPath,
 		BindHost:            "0.0.0.0",
 		HTTPPort:            "9001",

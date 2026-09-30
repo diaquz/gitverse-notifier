@@ -11,7 +11,6 @@ services:
       - "80:${HTTPD_PORT:-9001}"
     volumes:
       - ./config.yml:/opt/gitverse_notifier/config.yml:ro
-      - ./configs:/opt/gitverse_notifier/configs:ro
       - ./templates:/opt/gitverse_notifier/templates:ro
       - ./data:/opt/gitverse_notifier/data
     command: ["./gitverse_notifier", "-f", "/opt/gitverse_notifier/config.yml"]
